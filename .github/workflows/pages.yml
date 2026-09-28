@@ -32,9 +32,9 @@ jobs:
           set -euo pipefail
           mkdir -p site
           touch site/.nojekyll
-          git fetch origin main fabletics lululemon chat-explorations --prune || true
+          git fetch origin main fabletics lululemon chat-explorations homepage --prune || true
 
-          for branch in main fabletics lululemon chat-explorations; do
+          for branch in main fabletics lululemon chat-explorations homepage; do
             if ! git rev-parse --verify "origin/${branch}" >/dev/null 2>&1; then
               echo "Skipping ${branch} (not on origin)"
               continue
