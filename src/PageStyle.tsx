@@ -6,7 +6,7 @@ import { PlotTopBar, ThemeChat } from "./Newsfeed";
 import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import type { PostId } from "./posts";
 import { GRID_THEMES, type GridTheme } from "./ThemeGrid";
-import { CommentSentiment, DiscoverMore, ThemeFeedback, TopCreators } from "./ThemeSections";
+import { DiscoverMore, ThemeFeedback, TopCreators } from "./ThemeSections";
 import "./homepage.css";
 import "./newsfeed.css";
 import "./page-style.css";
@@ -353,7 +353,7 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
         crumbs={[{ label: "Home", onClick: onBack }, { label: theme.title }]}
         onBack={onBack}
       />
-      <div className={ask ? "ps has-chat" : "ps"}>
+      <div className="ps">
         <div className="ps-frame">
           <header className="ps-intro">
             <div className="ps-intro-copy">
@@ -381,31 +381,6 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
                   </strong>
                   Total engagement
                 </span>
-              </div>
-            </div>
-            <div className="ps-intro-tools">
-              <div className="ps-cta">
-                <button type="button" className="cc-btn" onClick={() => setAsk({ id: "open" })}>
-                  <img src={icon("icon-sparkles.svg")} alt="" />
-                  Ask AI
-                </button>
-                <button type="button" className="cc-btn">
-                  <img src={icon("icon-track.svg")} alt="" />
-                  Generate report
-                </button>
-              </div>
-              <div className="ps-asks">
-                <p>Try asking</p>
-                {prompts.map((prompt) => (
-                  <button
-                    key={prompt.text}
-                    type="button"
-                    className={ask?.question === prompt ? "is-on" : undefined}
-                    onClick={() => setAsk({ id: prompt.text, question: prompt })}
-                  >
-                    {prompt.text}
-                  </button>
-                ))}
               </div>
             </div>
           </header>
@@ -514,10 +489,8 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
 
           <div className="ps-insights">
             <TopCreators posts={all} onOpenPost={openPost} />
-            <CommentSentiment theme={theme} />
+            <ThemeFeedback key={theme.id} theme={theme} />
           </div>
-
-          <ThemeFeedback key={theme.id} theme={theme} />
 
           <DiscoverMore themes={GRID_THEMES.filter((item) => item.id !== theme.id)} onOpen={openTheme} />
         </div>
@@ -531,7 +504,28 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
             suggestions={prompts}
             onClose={() => setAsk(null)}
           />
-        ) : null}
+        ) : (
+          <aside className="ps-rail" aria-label="Ask about this theme">
+            <div className="ps-cta">
+              <button type="button" className="cc-btn" onClick={() => setAsk({ id: "open" })}>
+                <img src={icon("icon-sparkles.svg")} alt="" />
+                Ask AI
+              </button>
+              <button type="button" className="cc-btn">
+                <img src={icon("icon-track.svg")} alt="" />
+                Generate report
+              </button>
+            </div>
+            <div className="ps-asks">
+              <p>Try asking</p>
+              {prompts.map((prompt) => (
+                <button key={prompt.text} type="button" onClick={() => setAsk({ id: prompt.text, question: prompt })}>
+                  {prompt.text}
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
       </div>
     </>
   );

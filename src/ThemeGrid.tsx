@@ -149,13 +149,13 @@ function Sources({
     return onOpen ? (
       <button
         type="button"
-        className={`tg-sources is-posts is-button${chrome === "plain" ? " is-plain" : ""}`}
+        className={`tg-sources is-posts is-button${chrome === "plain" ? " is-plain" : ""}${cta ? " is-link" : ""}`}
         onClick={(event) => {
           event.stopPropagation();
           onOpen();
         }}
       >
-        {stack}
+        {cta ? null : stack}
         <span className="tg-sources-count">{cta ?? `View ${theme.stats.posts} posts`}</span>
         <span
           className="tg-sources-arrow"

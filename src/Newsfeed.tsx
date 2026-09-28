@@ -1724,6 +1724,87 @@ function LessLikeThis({
   );
 }
 
+const FIT_OPTIONS = ["Spot on", "Somewhat useful", "Not for us"] as const;
+
+export function ThemeFeedbackCard({ theme }: { theme: GridTheme }) {
+  const story = STORIES.find((item) => item.theme.id === theme.id) ?? STORIES[0];
+  const { product, category, format, claim } = story.about;
+  const topics = [product, category, format, claim];
+
+  const [fit, setFit] = useState<string | null>(null);
+  const [more, setMore] = useState<string[]>([]);
+  const [writeIn, setWriteIn] = useState(false);
+  const [note, setNote] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  if (saved) {
+    return (
+      <aside className="nf-less is-thanks" aria-live="polite">
+        <h3>Thanks for the feedback.</h3>
+        <p className="nf-less-thanks">We’ll use it to shape which themes show up in your newsfeed.</p>
+        <button type="button" className="nf-less-undo" onClick={() => setSaved(false)}>
+          Undo
+        </button>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="nf-less" aria-label={`Feedback on ${story.heading}`}>
+      <div className="nf-less-head">
+        <h3>How’s this theme?</h3>
+      </div>
+      <LessQuestion title="How useful is it?">
+        {FIT_OPTIONS.map((label) => (
+          <Pill key={label} quiet on={fit === label} onClick={() => setFit(fit === label ? null : label)}>
+            {label}
+          </Pill>
+        ))}
+      </LessQuestion>
+      <LessQuestion title="What do you want to see more of?">
+        {topics.map((label) => (
+          <Pill
+            key={label}
+            quiet
+            on={more.includes(label)}
+            onClick={() =>
+              setMore((current) =>
+                current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
+              )
+            }
+          >
+            {label}
+          </Pill>
+        ))}
+        <Pill quiet on={writeIn} onClick={() => setWriteIn((value) => !value)}>
+          Write in your own words
+        </Pill>
+        {writeIn ? (
+          <textarea
+            className="nf-less-note"
+            aria-label="Tell us more"
+            placeholder={`What would make “${story.heading}” more useful?`}
+            rows={2}
+            value={note}
+            autoFocus
+            onChange={(event) => setNote(event.target.value)}
+          />
+        ) : null}
+      </LessQuestion>
+      <div className="nf-midcard-save">
+        <button
+          type="button"
+          className="nf-midcard-submit"
+          disabled={!fit && !more.length && !note.trim()}
+          onClick={() => setSaved(true)}
+        >
+          Save feedback
+        </button>
+      </div>
+    </aside>
+  );
+}
+
 function LessQuestion({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="nf-less-question">

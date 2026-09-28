@@ -782,7 +782,8 @@
   gap: 16px;
 }
 
-.nf-less-head h3 {
+.nf-less-head h3,
+.nf-less.is-thanks h3 {
   margin: 0;
   color: var(--color-black);
   font-family: var(--font-display);
@@ -2443,4 +2444,20 @@
   height: 40px;
   border-radius: 50%;
   background: #f2e6ea;
+}
+
+.nf-stories .tg-card {
+  background: var(--color-gray-200);
+}
+
+.nf-stories .tg-card.is-split h3 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.96px;
+}
+
+.nf-stories .tg-feature-stats > span {
+  background: var(--color-gray-300);
 }

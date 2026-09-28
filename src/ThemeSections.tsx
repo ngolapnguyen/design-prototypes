@@ -1,11 +1,11 @@
 import { useState, type CSSProperties } from "react";
 import { assets } from "./assets";
 import { CommentThemes } from "./CommentSummary";
-import { ThemeLessFeedback } from "./Newsfeed";
+import { ThemeFeedbackCard } from "./Newsfeed";
 import { InstagramIcon, type CatalogPost } from "./PageStyle";
 import type { Theme } from "./posts";
 import { SentimentScore } from "./SentimentScore";
-import { Votes, type GridTheme } from "./ThemeGrid";
+import { ThemeCard, type GridTheme } from "./ThemeGrid";
 
 const ARROW = `${import.meta.env.BASE_URL}assets/newsfeed/icon-arrow-right.svg`;
 
@@ -269,38 +269,7 @@ export function CommentSentiment({ theme }: { theme: GridTheme }) {
 }
 
 export function ThemeFeedback({ theme }: { theme: GridTheme }) {
-  const [state, setState] = useState<"ask" | "up" | "down" | "saved">("ask");
-
-  if (state === "down") {
-    return <ThemeLessFeedback theme={theme} onUndo={() => setState("ask")} onSave={() => setState("saved")} />;
-  }
-
-  return (
-    <section className="ps-feedback" aria-label="Theme feedback">
-      {state === "ask" ? (
-        <>
-          <span className="ps-feedback-copy">
-            <strong>Was this theme useful?</strong>
-            <span>Your feedback shapes which themes show up in your newsfeed.</span>
-          </span>
-          <Votes vote={null} onVote={(next) => setState(next)} />
-        </>
-      ) : (
-        <>
-          <span className="ps-feedback-copy">
-            <strong>
-              {state === "up"
-                ? "Thanks. We’ll show you more themes like this."
-                : "Thanks. We’ll show fewer themes like this."}
-            </strong>
-          </span>
-          <button type="button" className="nf-less-undo" onClick={() => setState("ask")}>
-            Undo
-          </button>
-        </>
-      )}
-    </section>
-  );
+  return <ThemeFeedbackCard theme={theme} />;
 }
 
 export function DiscoverMore({ themes, onOpen }: { themes: GridTheme[]; onOpen: (theme: GridTheme) => void }) {
@@ -308,16 +277,15 @@ export function DiscoverMore({ themes, onOpen }: { themes: GridTheme[]; onOpen: 
     <section className="ps-discover" aria-labelledby="ps-discover-title">
       <h2 id="ps-discover-title">Discover more</h2>
       <div className="ps-discover-grid">
-        {themes.map((theme) => (
-          <button key={theme.id} type="button" className="ps-discover-card" onClick={() => onOpen(theme)}>
-            <span className="ps-discover-copy">
-              <strong>{theme.title}</strong>
-              <span className="ps-discover-summary">{theme.summary}</span>
-              <span className="ps-discover-meta">
-                {theme.stats.posts} posts · {theme.ago}
-              </span>
-            </span>
-          </button>
+        {themes.map((theme, index) => (
+          <ThemeCard
+            key={theme.id}
+            theme={theme}
+            variant="gray"
+            seed={index + 3}
+            layout="split"
+            onOpen={() => onOpen(theme)}
+          />
         ))}
       </div>
     </section>

@@ -1064,6 +1064,17 @@
   background: var(--color-gray-400);
 }
 
+.tg-sources.is-button.is-link {
+  gap: 4px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.tg-sources.is-button.is-link:hover .tg-sources-arrow {
+  transform: translateX(2px);
+}
+
 .tg-sources.is-button.is-plain {
   padding: 0;
   background: transparent;
