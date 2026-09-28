@@ -169,32 +169,25 @@ const BACKGROUNDS: Record<string, GridVariant> = { nyx: "photo" };
 const WATCHLIST = [
   {
     id: "w1",
+    kind: "Custom Report · From a theme",
+    title: "NYX Brow Glue hold vs. stiffness",
+    date: "September 24, 2026",
+    icon: nf.messages,
+  },
+  {
+    id: "w2",
     kind: "Custom Report",
-    title: "Easy baking hacks for busy parents",
-    date: "April 14, 2026",
+    title: "NYX Butter Gloss creator mentions",
+    date: "September 18, 2026",
     icon: nf.messages,
     owner: "Arthur Contractor",
   },
   {
-    id: "w2",
-    kind: "Custom Report · From a theme",
-    title: "Cicaplast Executive Analytical",
-    date: "April 14, 2026",
-    icon: nf.messages,
-  },
-  {
     id: "w3",
-    kind: "Deep Research Report",
-    title: "Cicaplast Executive Analytical",
-    date: "April 14, 2026",
-    icon: nf.document,
-  },
-  {
-    id: "w4",
-    kind: "Deep Research Report",
-    title: "Cicaplast Executive Analytical",
-    date: "April 14, 2026",
-    icon: nf.document,
+    kind: "Custom Report",
+    title: "NYX vs. drugstore brow gel dupes",
+    date: "September 9, 2026",
+    icon: nf.messages,
   },
 ];
 
