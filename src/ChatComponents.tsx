@@ -137,9 +137,9 @@ export function ChatComponents() {
                   setActionSent(false);
                 }}
               />
-              {actionPick === "Create a topic" ? <StatusLine label="Creating a topic so we can watch this" /> : null}
+              {actionPick === "Create a topic" ? <StatusLine label="Creating a topic" where="Topics" /> : null}
               {actionPick === "Keep going with what we have" ? (
-                <StatusLine label="Continuing with what we have" />
+                <StatusLine label="Continuing with what we have" where="this search" />
               ) : null}
               {actionPick === "Point me at a source" && !actionSent ? (
                 <Composer
@@ -154,7 +154,7 @@ export function ChatComponents() {
                 />
               ) : null}
               {actionPick === "Point me at a source" && actionSent ? (
-                <StatusLine label="Looking at that source" />
+                <StatusLine label="Reading that source" where="this thread" />
               ) : null}
             </div>
           </div>

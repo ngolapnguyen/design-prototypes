@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { CommentCount } from "./CommentCount";
 import { Icon } from "./Icon";
-import type { Post, SummaryMode } from "./posts";
+import type { AdditionalComments, Post, SummaryMode, Theme } from "./posts";
 
 function noOrphan(text: string) {
   const parts = text.trim().split(/\s+/);
@@ -49,55 +49,14 @@ type CommentSummaryProps = {
 
 export function CommentSummary({ post, mode, openThread, onOpen, onClose }: CommentSummaryProps) {
   if (mode === "themes") {
-    const rows = post.themeList ?? post.themes;
-
     return (
-      <div className="theme-list">
-        <div className="theme-rows">
-          {rows.map((theme) => (
-            <div className="theme-item" key={theme.id}>
-              <div className="theme-row">
-                <span className="theme-dot">
-                  <Icon src={theme.dot} size={10} />
-                </span>
-                <div className="theme-copy">
-                  <ThemeHeadline
-                    text={theme.headline}
-                    pill={
-                      <CommentCount
-                        id={`theme-${theme.id}`}
-                        comments={theme.comments}
-                        count={theme.count}
-                        labeled
-                        open={openThread === `theme-${theme.id}`}
-                        onOpen={onOpen}
-                        onClose={onClose}
-                      />
-                    }
-                  />
-                  {theme.detail ? <p className="theme-detail">{noOrphan(theme.detail)}</p> : null}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        {post.additional ? (
-          <div className="theme-extra">
-            <div className="theme-extra-head">
-              <p className="theme-extra-title">Additional comments</p>
-              <CommentCount
-                id="additional"
-                comments={post.additional.comments}
-                labeled
-                open={openThread === "additional"}
-                onOpen={onOpen}
-                onClose={onClose}
-              />
-            </div>
-            <p className="theme-extra-copy">{post.additional.copy}</p>
-          </div>
-        ) : null}
-      </div>
+      <CommentThemes
+        rows={post.themeList ?? post.themes}
+        additional={post.additional}
+        openThread={openThread}
+        onOpen={onOpen}
+        onClose={onClose}
+      />
     );
   }
 
@@ -119,6 +78,69 @@ export function CommentSummary({ post, mode, openThread, onOpen, onClose }: Comm
           />
         );
       })}
+    </div>
+  );
+}
+
+export function CommentThemes({
+  rows,
+  additional,
+  openThread,
+  onOpen,
+  onClose,
+}: {
+  rows: Theme[];
+  additional?: AdditionalComments;
+  openThread: string | null;
+  onOpen: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="theme-list">
+      <div className="theme-rows">
+        {rows.map((theme) => (
+          <div className="theme-item" key={theme.id}>
+            <div className="theme-row">
+              <span className="theme-dot">
+                <Icon src={theme.dot} size={10} />
+              </span>
+              <div className="theme-copy">
+                <ThemeHeadline
+                  text={theme.headline}
+                  pill={
+                    <CommentCount
+                      id={`theme-${theme.id}`}
+                      comments={theme.comments}
+                      count={theme.count}
+                      labeled
+                      open={openThread === `theme-${theme.id}`}
+                      onOpen={onOpen}
+                      onClose={onClose}
+                    />
+                  }
+                />
+                {theme.detail ? <p className="theme-detail">{noOrphan(theme.detail)}</p> : null}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {additional ? (
+        <div className="theme-extra">
+          <div className="theme-extra-head">
+            <p className="theme-extra-title">Additional comments</p>
+            <CommentCount
+              id="additional"
+              comments={additional.comments}
+              labeled
+              open={openThread === "additional"}
+              onOpen={onOpen}
+              onClose={onClose}
+            />
+          </div>
+          <p className="theme-extra-copy">{additional.copy}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

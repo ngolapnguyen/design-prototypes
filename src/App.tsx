@@ -1,46 +1,35 @@
 import { useState } from "react";
-import { Chat, type ChatView } from "./Chat";
-import { ChatComponents } from "./ChatComponents";
-import { ChatExplorations } from "./ChatExplorations";
-import { ChatInsights } from "./ChatInsights";
 import { DesignDecisions } from "./DesignDecisions";
-import { PrototypeNav, type ComponentSection, type LabPage, type LabUseCase } from "./PrototypeNav";
-import { Workflows } from "./Workflows";
+import { ThemeCardSpecimen } from "./Homepage";
+import { Newsfeed } from "./Newsfeed";
+import { PageStyle } from "./PageStyle";
+import { PrototypeNav, type LabPage } from "./PrototypeNav";
 
 export default function App() {
-  const [page, setPage] = useState<LabPage>("playground");
-  const [section, setSection] = useState<ComponentSection>("library");
-  const [useCase, setUseCase] = useState<LabUseCase>("sourcing");
-  const [chatView, setChatView] = useState<ChatView>("compose");
+  const [page, setPage] = useState<LabPage>("newsfeed");
+  const [theme, setTheme] = useState<string | null>(null);
+
+  const changePage = (next: LabPage) => {
+    setTheme(null);
+    setPage(next);
+  };
 
   return (
     <>
-      <PrototypeNav
-        page={page}
-        section={section}
-        useCase={useCase}
-        chatView={chatView}
-        onPage={setPage}
-        onSection={setSection}
-        onUseCase={setUseCase}
-        onChatView={setChatView}
-      />
+      <PrototypeNav page={page} onPage={changePage} />
       {page === "components" ? (
-        section === "explorations" ? (
-          <ChatExplorations />
-        ) : (
-          <ChatComponents />
-        )
+        <ThemeCardSpecimen />
       ) : page === "decisions" ? (
         <DesignDecisions />
+      ) : page === "pagestyle" ? (
+        <PageStyle onBack={() => changePage("newsfeed")} />
       ) : (
-        useCase === "workflows" ? (
-          <Workflows />
-        ) : useCase === "insights" ? (
-          <ChatInsights />
-        ) : (
-          <Chat view={chatView} onView={setChatView} />
-        )
+        <>
+          <div hidden={theme !== null}>
+            <Newsfeed onOpenTheme={setTheme} />
+          </div>
+          {theme ? <PageStyle key={theme} initialThemeId={theme} onBack={() => setTheme(null)} /> : null}
+        </>
       )}
     </>
   );

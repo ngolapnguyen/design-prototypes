@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AssistantBubble, ChatIcon, Chip, Composer, FollowUpQ, ProcessCard, RecommendActions, StatusLine, UserBubble } from "./chat-ui";
 import { chatAssets } from "./chat-assets";
 import "./chat.css";
@@ -61,6 +61,233 @@ function HighlightCopy({ text, quotes }: { text: string; quotes: string[] }) {
   });
   if (cursor < text.length) nodes.push(text.slice(cursor));
   return <p>{nodes}</p>;
+}
+
+const CHART_KPIS = [
+  { label: "Mentions", value: "4.2k", delta: "+12%", up: true },
+  { label: "EMV", value: "$186k", delta: "+8%", up: true },
+  { label: "Sentiment", value: "64%", delta: "+3", up: true },
+  { label: "Share of voice", value: "28%", delta: "−2", up: false },
+];
+
+const CHART_COMPARE = [
+  { label: "Plot", value: 42, tone: "" },
+  { label: "Glossier", value: 31, tone: "is-2" },
+  { label: "Rhode", value: 18, tone: "is-3" },
+  { label: "Summer Fridays", value: 9, tone: "is-4" },
+];
+
+const CHART_MIX = [
+  { label: "Instagram", value: 48, color: "#800532" },
+  { label: "TikTok", value: 31, color: "#c48a9a" },
+  { label: "X", value: 12, color: "#d8c4c8" },
+  { label: "YouTube", value: 9, color: "#eadde0" },
+];
+
+const CHART_TREND = [18, 22, 19, 28, 26, 34, 41];
+const CHART_WEEK = [22, 28, 18, 36, 44, 31, 40];
+
+function ChartKpis() {
+  return (
+    <div className="chat-chart is-kpis">
+      {CHART_KPIS.map((kpi) => (
+        <div className="chat-chart-kpi" key={kpi.label}>
+          <em>{kpi.label}</em>
+          <strong>{kpi.value}</strong>
+          <span className={kpi.up ? "is-up" : "is-down"}>{kpi.delta}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChartCompare() {
+  return (
+    <div className="chat-chart">
+      <div className="chat-chart-head">
+        <strong>Share of conversation</strong>
+        <span>Last 7 days</span>
+      </div>
+      <div className="chat-chart-rows">
+        {CHART_COMPARE.map((row) => (
+          <div className="chat-chart-row" key={row.label}>
+            <b>{row.label}</b>
+            <div className="chat-chart-track">
+              <i className={row.tone} style={{ width: `${row.value * 2}%` }} />
+            </div>
+            <span>{row.value}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChartTrend() {
+  const grainId = useId().replace(/:/g, "");
+  const width = 320;
+  const height = 92;
+  const pad = 6;
+  const min = Math.min(...CHART_TREND);
+  const max = Math.max(...CHART_TREND);
+  const points = CHART_TREND.map((value, index) => {
+    const x = pad + (index * (width - pad * 2)) / (CHART_TREND.length - 1);
+    const y = height - pad - ((value - min) / (max - min)) * (height - pad * 2);
+    return `${x},${y}`;
+  });
+  const area = `M${pad},${height - pad} L${points.join(" L")} L${width - pad},${height - pad} Z`;
+
+  return (
+    <div className="chat-chart">
+      <div className="chat-chart-head">
+        <strong>Mentions over the week</strong>
+        <span>Mon–Sun</span>
+      </div>
+      <div className="chat-chart-line">
+        <svg viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+          <defs>
+            <clipPath id={`${grainId}-clip`}>
+              <path d={area} />
+            </clipPath>
+            <filter id={`${grainId}-dither`} x="0" y="0" width="100%" height="100%">
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.92"
+                numOctaves="3"
+                seed="7"
+                stitchTiles="stitch"
+                result="noise"
+              />
+              <feColorMatrix
+                in="noise"
+                type="luminanceToAlpha"
+                result="alpha"
+              />
+              <feComponentTransfer in="alpha" result="bits">
+                <feFuncA type="discrete" tableValues="0 0 0 0 0.15 0.35 0.7 1" />
+              </feComponentTransfer>
+              <feFlood floodColor="#800532" result="ink" />
+              <feComposite in="ink" in2="bits" operator="in" result="dots" />
+            </filter>
+          </defs>
+          <path d={area} fill="#f7eef1" />
+          <rect
+            width={width}
+            height={height}
+            clipPath={`url(#${grainId}-clip)`}
+            filter={`url(#${grainId}-dither)`}
+            opacity="0.28"
+          />
+          <polyline
+            points={points.join(" ")}
+            fill="none"
+            stroke="#800532"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function ChartMix() {
+  return (
+    <div className="chat-chart">
+      <div className="chat-chart-head">
+        <strong>Where it happened</strong>
+        <span>By platform</span>
+      </div>
+      <div className="chat-chart-mix">
+        <div className="chat-chart-stack">
+          {CHART_MIX.map((item) => (
+            <i key={item.label} style={{ width: `${item.value}%`, background: item.color }} />
+          ))}
+        </div>
+        <div className="chat-chart-legend">
+          {CHART_MIX.map((item) => (
+            <p key={item.label}>
+              <i style={{ background: item.color }} />
+              {item.label}
+              <span>{item.value}%</span>
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChartBoard() {
+  return (
+    <div className="chat-chart is-board">
+      <div className="chat-chart-head">
+        <strong>Adobe snapshot</strong>
+        <span>Last 7 days</span>
+      </div>
+      <div className="chat-chart-board">
+        <div className="chat-chart-pane">
+          <em>Mentions</em>
+          <strong>4.2k</strong>
+          <div className="chat-chart-spark" aria-hidden="true">
+            {CHART_WEEK.map((value, index) => (
+              <i
+                key={`${value}-${index}`}
+                className={index === CHART_WEEK.length - 1 ? "is-on" : undefined}
+                style={{ height: `${value * 1.2}%` }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="chat-chart-pane">
+          <em>Vs last week</em>
+          <ul className="chat-chart-list">
+            <li>
+              Volume <span>+12%</span>
+            </li>
+            <li>
+              Positive <span>64%</span>
+            </li>
+            <li>
+              Neutral <span>27%</span>
+            </li>
+            <li>
+              Negative <span>9%</span>
+            </li>
+          </ul>
+        </div>
+        <div className="chat-chart-pane">
+          <em>Share of voice</em>
+          <div className="chat-chart-rows" style={{ padding: 0 }}>
+            {CHART_COMPARE.slice(0, 3).map((row) => (
+              <div className="chat-chart-row" key={row.label}>
+                <b>{row.label}</b>
+                <div className="chat-chart-track">
+                  <i className={row.tone} style={{ width: `${row.value * 2}%` }} />
+                </div>
+                <span>{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="chat-chart-pane">
+          <em>Top posts</em>
+          <ul className="chat-chart-list">
+            <li>
+              Reel recap <span>18.4k</span>
+            </li>
+            <li>
+              Store drop <span>11.2k</span>
+            </li>
+            <li>
+              Creator stitch <span>9.6k</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const mid = [
@@ -140,6 +367,45 @@ export function ChatExplorations() {
         <article className="chat-explore">
           <header className="chat-explore-head">
             <div>
+              <p className="chat-explore-meta">Sep 17 · Charts</p>
+              <h2>Dashboard cards</h2>
+            </div>
+            <p className="chat-explore-flag">Trying</p>
+          </header>
+          <p className="chat-explore-note">
+            Ways a snapshot can land in the thread as a dashboard, not a file. Same Adobe week — different density.
+          </p>
+          <div className="chat-spec-grid">
+            <figure className="chat-spec-canvas is-wide">
+              <figcaption>Pulse — KPI tiles</figcaption>
+              <div className="chat-link-demo">
+                <UserBubble text="What does the Adobe snapshot say about us this month?" />
+                <AssistantBubble text="Here’s the week at a glance." />
+                <ChartKpis />
+              </div>
+            </figure>
+            <figure className="chat-spec-canvas">
+              <figcaption>Compare — share of conversation</figcaption>
+              <ChartCompare />
+            </figure>
+            <figure className="chat-spec-canvas">
+              <figcaption>Trend — mentions over the week</figcaption>
+              <ChartTrend />
+            </figure>
+            <figure className="chat-spec-canvas">
+              <figcaption>Mix — where it happened</figcaption>
+              <ChartMix />
+            </figure>
+            <figure className="chat-spec-canvas is-wide">
+              <figcaption>Board — one dashboard card</figcaption>
+              <ChartBoard />
+            </figure>
+          </div>
+        </article>
+
+        <article className="chat-explore">
+          <header className="chat-explore-head">
+            <div>
               <p className="chat-explore-meta">Sep 17 · Actions</p>
               <h2>Recommended actions</h2>
             </div>
@@ -160,7 +426,7 @@ export function ChatExplorations() {
               />
             </figure>
             <figure className="chat-spec-canvas">
-              <figcaption>After a pick</figcaption>
+              <figcaption>After a pick — what only</figcaption>
               <div className="recommend-thread">
                 <RecommendActions
                   actions={RECOMMEND_ACTIONS}
@@ -168,6 +434,17 @@ export function ChatExplorations() {
                   selected="Create a topic"
                 />
                 <StatusLine label="Creating a topic so we can watch this" />
+              </div>
+            </figure>
+            <figure className="chat-spec-canvas">
+              <figcaption>After a pick — what and where</figcaption>
+              <div className="recommend-thread">
+                <RecommendActions
+                  actions={RECOMMEND_ACTIONS}
+                  recommended={RECOMMEND_ACTIONS[0]}
+                  selected="Create a topic"
+                />
+                <StatusLine label="Creating a topic" where="Topics" />
               </div>
             </figure>
           </div>

@@ -300,10 +300,19 @@ export function RecommendActions({
   );
 }
 
-function StatusCopy({ text, state }: { text: string; state: "in" | "out" }) {
+function StatusCopy({
+  text,
+  where,
+  state,
+}: {
+  text: string;
+  where?: string;
+  state: "in" | "out";
+}) {
   return (
     <p className={`status-line-copy is-${state}`} aria-hidden={state === "out"}>
       {text}
+      {where ? <span className="status-line-where"> · {where}</span> : null}
       <span className="status-line-ellipsis"> ...</span>
     </p>
   );
@@ -311,21 +320,25 @@ function StatusCopy({ text, state }: { text: string; state: "in" | "out" }) {
 
 export function StatusLine({
   label,
+  where,
   onSelect,
 }: {
   label: string;
+  where?: string;
   onSelect?: () => void;
 }) {
   const [current, setCurrent] = useState(label);
-  const [outgoing, setOutgoing] = useState<string | null>(null);
+  const [currentWhere, setCurrentWhere] = useState(where);
+  const [outgoing, setOutgoing] = useState<{ text: string; where?: string } | null>(null);
 
   useEffect(() => {
-    if (label === current) return;
-    setOutgoing(current);
+    if (label === current && where === currentWhere) return;
+    setOutgoing({ text: current, where: currentWhere });
     setCurrent(label);
+    setCurrentWhere(where);
     const timer = window.setTimeout(() => setOutgoing(null), 320);
     return () => window.clearTimeout(timer);
-  }, [label, current]);
+  }, [label, where, current, currentWhere]);
 
   const body = (
     <>
@@ -335,8 +348,8 @@ export function StatusLine({
         </span>
       </span>
       <span className="status-line-slot">
-        {outgoing ? <StatusCopy text={outgoing} state="out" /> : null}
-        <StatusCopy text={current} state="in" />
+        {outgoing ? <StatusCopy text={outgoing.text} where={outgoing.where} state="out" /> : null}
+        <StatusCopy text={current} where={currentWhere} state="in" />
       </span>
     </>
   );

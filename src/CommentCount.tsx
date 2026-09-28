@@ -119,8 +119,12 @@ export function CommentCount({
             <p className="comment-text">{comment.text}</p>
             <p className="comment-tooltip-meta">
               <span>{comment.likes}</span>
-              <span>·</span>
-              <span>{comment.replies}</span>
+              {comment.replies ? (
+                <>
+                  <span>·</span>
+                  <span>{comment.replies}</span>
+                </>
+              ) : null}
             </p>
           </div>
         </div>

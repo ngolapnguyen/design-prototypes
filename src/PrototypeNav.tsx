@@ -1,18 +1,8 @@
-import type { ChatView } from "./Chat";
-
-export type LabPage = "playground" | "components" | "decisions";
-export type ComponentSection = "library" | "explorations";
-export type LabUseCase = "sourcing" | "workflows" | "insights";
+export type LabPage = "newsfeed" | "components" | "decisions" | "pagestyle";
 
 type PrototypeNavProps = {
   page: LabPage;
-  section: ComponentSection;
-  useCase: LabUseCase;
-  chatView: ChatView;
   onPage: (page: LabPage) => void;
-  onSection: (section: ComponentSection) => void;
-  onUseCase: (useCase: LabUseCase) => void;
-  onChatView: (view: ChatView) => void;
 };
 
 function Segment<T extends string>({
@@ -46,16 +36,7 @@ function Segment<T extends string>({
   );
 }
 
-export function PrototypeNav({
-  page,
-  section,
-  useCase,
-  chatView,
-  onPage,
-  onSection,
-  onUseCase,
-  onChatView,
-}: PrototypeNavProps) {
+export function PrototypeNav({ page, onPage }: PrototypeNavProps) {
   return (
     <header className="proto-bar">
       <p className="proto-kicker">Prototype</p>
@@ -65,46 +46,12 @@ export function PrototypeNav({
           value={page}
           onChange={onPage}
           options={[
-            { id: "playground", label: "Playground" },
+            { id: "newsfeed", label: "Newsfeed" },
             { id: "components", label: "Components" },
             { id: "decisions", label: "Design Decisions" },
+            { id: "pagestyle", label: "Page Style" },
           ]}
         />
-        {page === "components" ? (
-          <Segment
-            label="Section"
-            value={section}
-            onChange={onSection}
-            options={[
-              { id: "library", label: "Library" },
-              { id: "explorations", label: "Explorations" },
-            ]}
-          />
-        ) : null}
-        {page === "playground" ? (
-          <Segment
-            label="Use case"
-            value={useCase}
-            onChange={onUseCase}
-            options={[
-              { id: "sourcing", label: "Creator Sourcing" },
-              { id: "workflows", label: "Workflows" },
-              { id: "insights", label: "Insights" },
-            ]}
-          />
-        ) : null}
-        {page === "playground" && useCase === "sourcing" ? (
-          <Segment
-            label="State"
-            value={chatView}
-            onChange={onChatView}
-            options={[
-              { id: "compose", label: "Compose" },
-              { id: "working", label: "Working" },
-              { id: "compare", label: "Compare" },
-            ]}
-          />
-        ) : null}
       </div>
     </header>
   );
