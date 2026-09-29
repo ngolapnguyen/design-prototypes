@@ -2,11 +2,11 @@ import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { assets } from "./assets";
 import { FILTER_GROUPS, FiltersMenu, Menu, SORT_OPTIONS } from "./FeedControls";
 import { ClipPlay } from "./Homepage";
-import { PlotTopBar, ThemeChat, ThemeDownReasons } from "./Newsfeed";
+import { EMPTY_FEEDBACK, PlotTopBar, ThemeChat, ThemeDownReasons, type ThemeFeedbackValue } from "./Newsfeed";
 import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import type { PostId } from "./posts";
 import { GRID_THEMES, Votes, type GridTheme } from "./ThemeGrid";
-import { DiscoverMore, ThemeFeedback, TopCreators } from "./ThemeSections";
+import { DiscoverMore, TopCreators } from "./ThemeSections";
 import "./homepage.css";
 import "./newsfeed.css";
 import "./page-style.css";
@@ -300,7 +300,14 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
   const all = useMemo(() => catalog(theme), [theme]);
   const [open, setOpen] = useState<OpenPost | null>(null);
   const [ask, setAsk] = useState<{ id: string; question?: AskPrompt } | null>(null);
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
+  const [feedbackByTheme, setFeedbackByTheme] = useState<Record<string, ThemeFeedbackValue>>({});
+  const feedback = feedbackByTheme[theme.id] ?? EMPTY_FEEDBACK;
+  const updateFeedback = (patch: Partial<ThemeFeedbackValue>) =>
+    setFeedbackByTheme((current) => ({
+      ...current,
+      [theme.id]: { ...(current[theme.id] ?? EMPTY_FEEDBACK), ...patch },
+    }));
+  const vote = feedback.fit === "Spot on" ? "up" : feedback.fit === "Not for us" ? "down" : null;
   const [askWhy, setAskWhy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
@@ -313,7 +320,11 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
 
   const onVote = (next: "up" | "down") => {
     const value = vote === next ? null : next;
-    setVote(value);
+    updateFeedback({
+      fit: value === "up" ? "Spot on" : value === "down" ? "Not for us" : null,
+      fromThumb: value !== null,
+      saved: false,
+    });
     setAskWhy(value === "down");
     if (value === "up") ping("Thanks for the feedback. We’ll show more themes like this.");
   };
@@ -481,7 +492,6 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
 
           <div className="ps-insights">
             <TopCreators posts={all} onOpenPost={openPost} />
-            <ThemeFeedback key={theme.id} theme={theme} />
           </div>
 
           <DiscoverMore themes={GRID_THEMES.filter((item) => item.id !== theme.id)} onOpen={openTheme} />
@@ -509,9 +519,12 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
               </button>
               <Votes vote={vote} onVote={onVote} />
             </div>
-            {askWhy ? (
+            {askWhy && vote === "down" && !feedback.saved ? (
               <ThemeDownReasons
+                value={feedback}
+                onChange={updateFeedback}
                 onSave={() => {
+                  updateFeedback({ saved: true });
                   setAskWhy(false);
                   ping("Thanks for the feedback. We’ll show fewer themes like this.");
                 }}

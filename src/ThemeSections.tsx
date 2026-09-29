@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { assets } from "./assets";
 import { CommentThemes } from "./CommentSummary";
-import { ThemeFeedbackCard } from "./Newsfeed";
+import { ThemeFeedbackCard, type ThemeFeedbackValue } from "./Newsfeed";
 import { InstagramIcon, type CatalogPost } from "./PageStyle";
 import type { Theme } from "./posts";
 import { SentimentScore } from "./SentimentScore";
@@ -220,6 +220,7 @@ export function TopCreators({ posts, onOpenPost }: { posts: CatalogPost[]; onOpe
                     style={{ "--tg-arrow": `url(${ARROW})` } as CSSProperties}
                     aria-hidden="true"
                   />
+                  <img className="ps-creator-peek" src={creator.top.src} alt="" />
                 </button>
               </span>
             </li>
@@ -268,8 +269,16 @@ export function CommentSentiment({ theme }: { theme: GridTheme }) {
   );
 }
 
-export function ThemeFeedback({ theme }: { theme: GridTheme }) {
-  return <ThemeFeedbackCard theme={theme} />;
+export function ThemeFeedback({
+  theme,
+  value,
+  onChange,
+}: {
+  theme: GridTheme;
+  value: ThemeFeedbackValue;
+  onChange: (patch: Partial<ThemeFeedbackValue>) => void;
+}) {
+  return <ThemeFeedbackCard theme={theme} value={value} onChange={onChange} />;
 }
 
 export function DiscoverMore({ themes, onOpen }: { themes: GridTheme[]; onOpen: (theme: GridTheme) => void }) {

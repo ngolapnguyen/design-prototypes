@@ -1770,24 +1770,77 @@ function LessLikeThis({
 
 const FIT_OPTIONS = ["Spot on", "Somewhat useful", "Not for us"] as const;
 
-export function ThemeFeedbackCard({ theme }: { theme: GridTheme }) {
+export type ThemeFeedbackValue = {
+  fit: (typeof FIT_OPTIONS)[number] | null;
+  more: string[];
+  reasons: string[];
+  note: string;
+  writeIn: boolean;
+  saved: boolean;
+  fromThumb: boolean;
+};
+
+export const EMPTY_FEEDBACK: ThemeFeedbackValue = {
+  fit: null,
+  more: [],
+  reasons: [],
+  note: "",
+  writeIn: false,
+  saved: false,
+  fromThumb: false,
+};
+
+type FeedbackProps = {
+  value: ThemeFeedbackValue;
+  onChange: (patch: Partial<ThemeFeedbackValue>) => void;
+};
+
+const toggleIn = (list: string[], label: string) =>
+  list.includes(label) ? list.filter((item) => item !== label) : [...list, label];
+
+function ReasonsQuestion({ value, onChange }: FeedbackProps) {
+  return (
+    <LessQuestion title="What’s off about this one?">
+      {LESS_REASONS.map((label) => (
+        <Pill
+          key={label}
+          quiet
+          on={value.reasons.includes(label)}
+          onClick={() => onChange({ reasons: toggleIn(value.reasons, label) })}
+        >
+          {label}
+        </Pill>
+      ))}
+      <Pill quiet on={value.writeIn} onClick={() => onChange({ writeIn: !value.writeIn })}>
+        Write in your own words
+      </Pill>
+      {value.writeIn ? (
+        <textarea
+          className="nf-less-note"
+          aria-label="Tell us what’s off"
+          rows={2}
+          value={value.note}
+          onChange={(event) => onChange({ note: event.target.value })}
+        />
+      ) : null}
+    </LessQuestion>
+  );
+}
+
+export function ThemeFeedbackCard({ theme, value, onChange }: FeedbackProps & { theme: GridTheme }) {
   const story = STORIES.find((item) => item.theme.id === theme.id) ?? STORIES[0];
   const { product, category, format, claim } = story.about;
   const topics = [product, category, format, claim];
+  const negative = value.fit === "Not for us";
 
-  const [fit, setFit] = useState<string | null>(null);
-  const [more, setMore] = useState<string[]>([]);
-  const [writeIn, setWriteIn] = useState(false);
-  const [note, setNote] = useState("");
-  const [saved, setSaved] = useState(false);
-
-  if (saved) {
+  if (value.saved) {
+    const details = negative ? value.reasons : value.more;
     return (
       <aside className="nf-less is-thanks" aria-live="polite">
         <h3>Thanks for the feedback.</h3>
-        <p className="nf-less-thanks">We’ll use it to shape which themes show up in your newsfeed.</p>
-        <button type="button" className="nf-less-undo" onClick={() => setSaved(false)}>
-          Undo
+        <p className="nf-less-thanks">You said: {[value.fit ?? "No rating", ...details].join(" · ")}</p>
+        <button type="button" className="nf-less-undo" onClick={() => onChange({ saved: false })}>
+          Edit
         </button>
       </aside>
     );
@@ -1800,47 +1853,58 @@ export function ThemeFeedbackCard({ theme }: { theme: GridTheme }) {
       </div>
       <LessQuestion title="How useful is it?">
         {FIT_OPTIONS.map((label) => (
-          <Pill key={label} quiet on={fit === label} onClick={() => setFit(fit === label ? null : label)}>
-            {label}
-          </Pill>
-        ))}
-      </LessQuestion>
-      <LessQuestion title="What do you want to see more of?">
-        {topics.map((label) => (
           <Pill
             key={label}
             quiet
-            on={more.includes(label)}
-            onClick={() =>
-              setMore((current) =>
-                current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
-              )
-            }
+            on={value.fit === label}
+            onClick={() => onChange({ fit: value.fit === label ? null : label, fromThumb: false })}
           >
             {label}
           </Pill>
         ))}
-        <Pill quiet on={writeIn} onClick={() => setWriteIn((value) => !value)}>
-          Write in your own words
-        </Pill>
-        {writeIn ? (
-          <textarea
-            className="nf-less-note"
-            aria-label="Tell us more"
-            placeholder={`What would make “${story.heading}” more useful?`}
-            rows={2}
-            value={note}
-            autoFocus
-            onChange={(event) => setNote(event.target.value)}
-          />
+        {value.fromThumb && value.fit ? (
+          <p className="nf-less-source">From your thumbs {negative ? "down" : "up"}</p>
         ) : null}
       </LessQuestion>
+      {negative ? (
+        <ReasonsQuestion value={value} onChange={onChange} />
+      ) : (
+        <LessQuestion title="What do you want to see more of?">
+          {topics.map((label) => (
+            <Pill
+              key={label}
+              quiet
+              on={value.more.includes(label)}
+              onClick={() => onChange({ more: toggleIn(value.more, label) })}
+            >
+              {label}
+            </Pill>
+          ))}
+          <Pill quiet on={value.writeIn} onClick={() => onChange({ writeIn: !value.writeIn })}>
+            Write in your own words
+          </Pill>
+          {value.writeIn ? (
+            <textarea
+              className="nf-less-note"
+              aria-label="Tell us more"
+              placeholder={`What would make “${story.heading}” more useful?`}
+              rows={2}
+              value={value.note}
+              onChange={(event) => onChange({ note: event.target.value })}
+            />
+          ) : null}
+        </LessQuestion>
+      )}
       <div className="nf-midcard-save">
         <button
           type="button"
           className="nf-midcard-submit"
-          disabled={!fit && !more.length && !note.trim()}
-          onClick={() => setSaved(true)}
+          disabled={
+            negative
+              ? !value.reasons.length && !value.note.trim()
+              : !value.fit && !value.more.length && !value.note.trim()
+          }
+          onClick={() => onChange({ saved: true })}
         >
           Save feedback
         </button>
@@ -1849,44 +1913,17 @@ export function ThemeFeedbackCard({ theme }: { theme: GridTheme }) {
   );
 }
 
-export function ThemeDownReasons({ onSave }: { onSave: () => void }) {
-  const [reasons, setReasons] = useState<string[]>([]);
-  const [writeIn, setWriteIn] = useState(false);
-  const [note, setNote] = useState("");
-
+export function ThemeDownReasons({ value, onChange, onSave }: FeedbackProps & { onSave: () => void }) {
   return (
     <div className="nf-down-reasons">
-      <LessQuestion title="What’s off about this one?">
-        {LESS_REASONS.map((label) => (
-          <Pill
-            key={label}
-            quiet
-            on={reasons.includes(label)}
-            onClick={() =>
-              setReasons((current) =>
-                current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
-              )
-            }
-          >
-            {label}
-          </Pill>
-        ))}
-        <Pill quiet on={writeIn} onClick={() => setWriteIn((value) => !value)}>
-          Write in your own words
-        </Pill>
-        {writeIn ? (
-          <textarea
-            className="nf-less-note"
-            aria-label="Tell us what’s off"
-            rows={2}
-            value={note}
-            autoFocus
-            onChange={(event) => setNote(event.target.value)}
-          />
-        ) : null}
-      </LessQuestion>
+      <ReasonsQuestion value={value} onChange={onChange} />
       <div className="nf-midcard-save">
-        <button type="button" className="nf-midcard-submit" disabled={!reasons.length && !note.trim()} onClick={onSave}>
+        <button
+          type="button"
+          className="nf-midcard-submit"
+          disabled={!value.reasons.length && !value.note.trim()}
+          onClick={onSave}
+        >
           Send
         </button>
       </div>

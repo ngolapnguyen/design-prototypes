@@ -1,4 +1,4 @@
-export type LabPage = "newsfeed" | "components" | "decisions" | "pagestyle";
+export type LabPage = "newsfeed" | "decisions" | "rules" | "experiments";
 
 type PrototypeNavProps = {
   page: LabPage;
@@ -47,10 +47,9 @@ export function PrototypeNav({ page, onPage }: PrototypeNavProps) {
           onChange={onPage}
           options={[
             { id: "newsfeed", label: "Newsfeed" },
-            { id: "components", label: "Components" },
             { id: "decisions", label: "Design Decisions" },
-            { id: "pagestyle", label: "Page Style" },
-          ]}
+            { id: "rules", label: "Rules" },
+            { id: "experiments", label: "Experiments" },          ]}
         />
       </div>
     </header>

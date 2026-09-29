@@ -191,6 +191,62 @@
   cursor: pointer;
 }
 
+.ps-creator-side {
+  position: relative;
+}
+
+.ps-creator-link {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.ps-creators li:hover .ps-creator-link,
+.ps-creator-link:focus-visible {
+  opacity: 1;
+}
+
+.ps-creator-peek {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 12px);
+  z-index: 5;
+  width: 64px;
+  aspect-ratio: 4 / 5;
+  border: 3px solid var(--color-white);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px -10px rgba(35, 6, 3, 0.35);
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(4px, -50%) rotate(var(--peek-rotate, 2deg));
+  transition:
+    opacity 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+
+.ps-creators li:nth-child(5n + 2) .ps-creator-peek {
+  --peek-rotate: -3deg;
+}
+
+.ps-creators li:nth-child(5n + 3) .ps-creator-peek {
+  --peek-rotate: 1deg;
+}
+
+.ps-creators li:nth-child(5n + 4) .ps-creator-peek {
+  --peek-rotate: -1.5deg;
+}
+
+.ps-creators li:nth-child(5n + 5) .ps-creator-peek {
+  --peek-rotate: 3deg;
+}
+
+.ps-creators li:hover .ps-creator-peek,
+.ps-creator-link:focus-visible .ps-creator-peek {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(0, -50%) rotate(var(--peek-rotate, 2deg));
+}
+
 .ps-creator-link:hover .tg-sources-arrow {
   transform: translateX(2px);
 }
@@ -523,13 +579,15 @@
   margin-left: auto;
 }
 
-.ps .nf-less-question p {
+.ps .nf-less-question p,
+.exp-feedback .nf-less-question p {
   color: var(--color-black);
   font-size: 16px;
   font-weight: 500;
 }
 
-.ps .nf-pill {
+.ps .nf-pill,
+.exp-feedback .nf-pill {
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--color-gray-200);
@@ -542,22 +600,35 @@
   background: var(--color-white);
 }
 
-.ps .nf-pill:hover {
+.ps .nf-pill:hover,
+.exp-feedback .nf-pill:hover {
   background: var(--color-gray-300);
 }
 
-.ps .nf-pill.is-on {
+.ps .nf-pill.is-on,
+.exp-feedback .nf-pill.is-on {
   background: #600426;
   color: #f2e6ea;
+}
+
+.nf-less .nf-less-question p.nf-less-source {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-gray-700);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.nf-down-reasons .nf-less-question {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .nf-down-reasons {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-gray-300);
+  margin-top: 20px;
 }
 
 .ps-asks {

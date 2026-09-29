@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { DesignDecisions } from "./DesignDecisions";
+import { Experiments } from "./Experiments";
 import { ThemeCardSpecimen } from "./Homepage";
 import { Newsfeed } from "./Newsfeed";
 import { PageStyle } from "./PageStyle";
 import { PrototypeNav, type LabPage } from "./PrototypeNav";
+import { Rules } from "./Rules";
 
 export default function App() {
   const [page, setPage] = useState<LabPage>("newsfeed");
@@ -17,12 +19,15 @@ export default function App() {
   return (
     <>
       <PrototypeNav page={page} onPage={changePage} />
-      {page === "components" ? (
-        <ThemeCardSpecimen />
-      ) : page === "decisions" ? (
-        <DesignDecisions />
-      ) : page === "pagestyle" ? (
-        <PageStyle onBack={() => changePage("newsfeed")} />
+      {page === "decisions" ? (
+        <>
+          <ThemeCardSpecimen />
+          <DesignDecisions />
+        </>
+      ) : page === "rules" ? (
+        <Rules />
+      ) : page === "experiments" ? (
+        <Experiments />
       ) : (
         <>
           <div hidden={theme !== null}>

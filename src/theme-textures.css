@@ -1045,12 +1045,6 @@
   text-align: left;
 }
 
-.tg-card.is-split .tg-open:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
-}
-
 .tg-sources.is-button {
   align-self: flex-start;
   padding: 5px 12px;
