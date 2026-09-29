@@ -345,6 +345,7 @@ export function ThemeCard({
   sources,
   sourcesChrome,
   cta,
+  kicker,
 }: {
   theme: GridTheme;
   variant: GridVariant;
@@ -361,6 +362,7 @@ export function ThemeCard({
   sources?: CardSources;
   sourcesChrome?: SourcesChrome;
   cta?: string;
+  kicker?: string;
 }) {
   const posts = Array.from({ length: POSTS_PER_THEME }, (_, index) => theme.posts[index % theme.posts.length]);
 
@@ -433,11 +435,14 @@ export function ThemeCard({
               {actions}
             </div>
           ) : null}
+          {kicker && layout !== "stack" ? <p className="tg-kicker">{kicker}</p> : null}
           {title}
           <p className="tg-summary">{theme.summary}</p>
           {sources || (layout === "split" && votes) ? (
             <div className="tg-card-foot" onClick={(event) => event.stopPropagation()}>
-              {sources ? <Sources theme={theme} kind={sources} chrome={sourcesChrome} onOpen={onOpen} cta={cta} /> : null}
+              {sources ? (
+                <Sources theme={theme} kind={sources} chrome={sourcesChrome} onOpen={onOpen} cta={cta} />
+              ) : null}
               {layout === "split" ? votes : null}
             </div>
           ) : null}

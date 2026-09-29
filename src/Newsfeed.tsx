@@ -5,6 +5,7 @@ import type { PostId } from "./posts";
 import { CAPTION } from "./FocusCarousel";
 import { DEFAULT_FILTERS, FiltersMenu, Menu, SORT_OPTIONS, TIME_OPTIONS } from "./FeedControls";
 import { GRID_THEMES, ThemeCard, ThemeFeature, type GridTheme, type GridVariant } from "./ThemeGrid";
+import { PAST_THEMES, type PastTheme } from "./PastThemes";
 import "./newsfeed.css";
 
 const file = (path: string) => `${import.meta.env.BASE_URL}assets/newsfeed/${path}`;
@@ -107,11 +108,15 @@ const THEME_FACTS: Record<string, { hoursAgo: number; about: ThemeAbout }> = {
   },
 };
 
-const STORIES: Story[] = [0, 1].flatMap((round) =>
+const ROUND_OFFSETS = [0, 72, 192];
+
+const agoLabel = (hours: number) => (hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`);
+
+const STORIES: Story[] = ROUND_OFFSETS.flatMap((offset, round) =>
   GRID_THEMES.map((theme) => {
     const facts = THEME_FACTS[theme.id];
-    const hoursAgo = facts.hoursAgo + round * 24;
-    const scale = round ? 0.4 : 1;
+    const hoursAgo = facts.hoursAgo + offset;
+    const scale = [1, 0.4, 0.25][round];
     const stats = {
       posts: Math.round(theme.stats.posts * scale),
       views: Math.round(theme.stats.views * scale),
@@ -119,39 +124,41 @@ const STORIES: Story[] = [0, 1].flatMap((round) =>
     };
     return {
       id: round ? `${theme.id}-${round}` : theme.id,
-      ago: `${hoursAgo}h ago`,
+      ago: agoLabel(hoursAgo),
       hoursAgo,
       heading: theme.title,
       ...stats,
       about: facts.about,
-      theme: { ...theme, ago: `${hoursAgo}h ago`, stats },
+      theme: { ...theme, ago: agoLabel(hoursAgo), stats },
     };
   }),
 );
 
 const DEFAULT_THEMES = 4;
+const FEED_DAYS = 14;
+
+const RANGE_DAYS: Record<(typeof TIME_OPTIONS)[number], number> = {
+  "All time": Infinity,
+  "Last 48 hours": 2,
+  "Last 7 days": 7,
+  "Last 14 days": 14,
+  "Last 30 days": 30,
+  "Last 3 months": 92,
+  "Last 6 months": 183,
+  "Last 12 months": 365,
+  "This year": 272,
+  "Custom range": FEED_DAYS,
+};
 
 type FeedSlot = { kind: "feature" | "card"; story: Story } | { kind: "feedback" };
 
 function arrangeFeed(stories: Story[], withFeedback: boolean): FeedSlot[] {
-  const rest = [...stories];
-  const slots: FeedSlot[] = [];
-  const take = (kind: "feature" | "card", count = 1) => {
-    rest.splice(0, count).forEach((story) => slots.push({ kind, story }));
-  };
-  take("feature");
-  take("card", 2);
-  if (withFeedback && rest.length) {
-    take("card");
-    slots.push({ kind: "feedback" });
-  }
-  while (rest.length) {
-    if (rest.length === 2) take("card", 2);
-    else {
-      take("feature");
-      take("card", 2);
-    }
-  }
+  const [lead, ...rest] = stories;
+  const slots: FeedSlot[] = lead ? [{ kind: "feature", story: lead }] : [];
+  rest.forEach((story, index) => {
+    slots.push({ kind: "card", story });
+    if (withFeedback && index === 2) slots.push({ kind: "feedback" });
+  });
   return slots;
 }
 
@@ -204,9 +211,9 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
   const [toast, setToast] = useState<string | null>(null);
   const [menu, setMenu] = useState<"time" | "sort" | "filters" | null>(null);
   const [filters, setFilters] = useState<string[]>(DEFAULT_FILTERS);
-  const [time, setTime] = useState<(typeof TIME_OPTIONS)[number]>("Last 7 days");
+  const [time, setTime] = useState<(typeof TIME_OPTIONS)[number]>("Last 14 days");
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>("Recency");
-  const [showMore, setShowMore] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [tracked, setTracked] = useState<string[]>([]);
   const [reviewed, setReviewed] = useState<string[]>([]);
   const [pastReviewed, setPastReviewed] = useState(0);
@@ -250,7 +257,14 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
     return a.hoursAgo - b.hoursAgo;
   });
   const visible = ordered.filter((story) => !hidden.includes(story.id));
-  const stories = showMore ? visible : visible.slice(0, DEFAULT_THEMES);
+  const days = RANGE_DAYS[time];
+  const inRange = visible.filter((story) => story.hoursAgo <= days * 24);
+  const olderInRange = PAST_THEMES.filter((item) => item.daysAgo < days);
+  const limit = showAll ? Infinity : DEFAULT_THEMES;
+  const stories = inRange.slice(0, limit);
+  const older = olderInRange.slice(0, Math.max(0, limit - inRange.length));
+  const olderWeeks = [...new Set(older.map((item) => item.week))];
+  const hasMore = stories.length + older.length < inRange.length + olderInRange.length;
 
   const totalReviewed = pastReviewed + reviewed.length;
   const streak = totalReviewed ? 1 : 0;
@@ -260,20 +274,24 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
 
   const openStory = (story: Story) => (onOpenTheme ? onOpenTheme(story.theme.id) : setOpenTheme(story));
 
+  const openPast = (item: PastTheme) => {
+    if (item.openId) onOpenTheme?.(item.openId);
+  };
+
   const openThemePost = (story: Story, index: number) => {
     const postId: PostId = index % 2 === 0 ? "1" : "2";
     setOpenPost({ postId, title: POST_TITLES[postId], source: story.heading });
   };
 
-  const voteTheme = (story: Story, next: "up" | "down") => {
-    const cleared = votes[story.id] === next;
+  const voteTheme = (id: string, next: "up" | "down") => {
+    const cleared = votes[id] === next;
     setVotes((current) => {
-      if (current[story.id] === next) {
+      if (current[id] === next) {
         const copy = { ...current };
-        delete copy[story.id];
+        delete copy[id];
         return copy;
       }
-      return { ...current, [story.id]: next };
+      return { ...current, [id]: next };
     });
     if (next === "up") {
       ping(cleared ? "Feedback cleared" : "Thanks for your feedback. You’ll see more suggestions like this.");
@@ -464,6 +482,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                       return;
                     }
                     setTime(value);
+                    setShowAll(RANGE_DAYS[value] > FEED_DAYS);
                     setMenu(null);
                   }}
                 />
@@ -523,7 +542,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                       cta="View details"
                       vote={votes[story.id] ?? null}
                       onOpen={() => openStory(story)}
-                      onVote={(next) => voteTheme(story, next)}
+                      onVote={(next) => voteTheme(story.id, next)}
                       onOpenPost={(post) => openThemePost(story, post)}
                     />
                   ) : (
@@ -538,24 +557,49 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                       vote={votes[story.id] ?? null}
                       onOpen={() => openStory(story)}
                       onAsk={() => askTheme(story)}
-                      onVote={(next) => voteTheme(story, next)}
+                      onVote={(next) => voteTheme(story.id, next)}
                       onTrack={() => trackTheme(story)}
                     />
                   )}
                 </Fragment>
               );
             })}
+            {olderWeeks.map((week) => {
+              const items = older.filter((item) => item.week === week);
+              return (
+                <Fragment key={week}>
+                  <h3 className="nf-week">
+                    {week}
+                    <span>
+                      {items.length} {items.length === 1 ? "theme" : "themes"}
+                    </span>
+                  </h3>
+                  {items.map((item, index) => (
+                    <ThemeCard
+                      key={item.id}
+                      theme={item.theme}
+                      variant="gray"
+                      seed={index + 3}
+                      layout="split"
+                      sources="posts"
+                      cta="View details"
+                      kicker={`From ${item.date}${item.merged ? ` · Combined from ${item.merged} themes` : ""}`}
+                      vote={votes[item.id] ?? null}
+                      onOpen={() => openPast(item)}
+                      onVote={(next) => voteTheme(item.id, next)}
+                    />
+                  ))}
+                </Fragment>
+              );
+            })}
           </div>
 
-          <button
-            type="button"
-            className={showMore ? "nf-btn is-soft nf-more is-open" : "nf-btn is-soft nf-more"}
-            aria-expanded={showMore}
-            onClick={() => setShowMore((value) => !value)}
-          >
-            <img src={nf.chevronDown} alt="" width={16} height={16} />
-            {showMore ? "Show fewer themes" : "Show all 52 themes"}
-          </button>
+          {hasMore ? (
+            <button type="button" className="nf-btn is-soft nf-more" onClick={() => setShowAll(true)}>
+              <img src={nf.chevronDown} alt="" width={16} height={16} />
+              Show all themes
+            </button>
+          ) : null}
         </section>
 
         <section className="nf-section" aria-labelledby="nf-watch-title">
@@ -710,7 +754,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
           vote={votes[openTheme.id] ?? null}
           onClose={() => setOpenTheme(null)}
           onAsk={() => askTheme(openTheme)}
-          onVote={(next) => voteTheme(openTheme, next)}
+          onVote={(next) => voteTheme(openTheme.id, next)}
           onTrack={() => trackTheme(openTheme)}
           onOpenPost={(index) => openThemePost(openTheme, index)}
           number={visible.findIndex((item) => item.id === openTheme.id) + 1}
@@ -1802,6 +1846,51 @@ export function ThemeFeedbackCard({ theme }: { theme: GridTheme }) {
         </button>
       </div>
     </aside>
+  );
+}
+
+export function ThemeDownReasons({ onSave }: { onSave: () => void }) {
+  const [reasons, setReasons] = useState<string[]>([]);
+  const [writeIn, setWriteIn] = useState(false);
+  const [note, setNote] = useState("");
+
+  return (
+    <div className="nf-down-reasons">
+      <LessQuestion title="What’s off about this one?">
+        {LESS_REASONS.map((label) => (
+          <Pill
+            key={label}
+            quiet
+            on={reasons.includes(label)}
+            onClick={() =>
+              setReasons((current) =>
+                current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
+              )
+            }
+          >
+            {label}
+          </Pill>
+        ))}
+        <Pill quiet on={writeIn} onClick={() => setWriteIn((value) => !value)}>
+          Write in your own words
+        </Pill>
+        {writeIn ? (
+          <textarea
+            className="nf-less-note"
+            aria-label="Tell us what’s off"
+            rows={2}
+            value={note}
+            autoFocus
+            onChange={(event) => setNote(event.target.value)}
+          />
+        ) : null}
+      </LessQuestion>
+      <div className="nf-midcard-save">
+        <button type="button" className="nf-midcard-submit" disabled={!reasons.length && !note.trim()} onClick={onSave}>
+          Send
+        </button>
+      </div>
+    </div>
   );
 }
 

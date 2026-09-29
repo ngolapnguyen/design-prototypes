@@ -1103,7 +1103,9 @@
   font-family: var(--font-display);
   font-size: 17.03px;
   font-weight: 500;
-  font-feature-settings: "lnum" 1, "tnum" 1;
+  font-feature-settings:
+    "lnum" 1,
+    "tnum" 1;
   line-height: 1.34;
   letter-spacing: -0.8515px;
   white-space: nowrap;
@@ -1128,6 +1130,30 @@
 
 .nf-more.is-open img {
   transform: rotate(180deg);
+}
+
+.nf-week {
+  grid-column: 1 / -1;
+  margin: 24px 0 -4px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.48px;
+}
+
+.nf-week span {
+  margin-left: 10px;
+  color: var(--color-gray-700);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.nf-stories .tg-card.is-split .tg-kicker {
+  margin: 0;
+  font-size: 13px;
 }
 
 .nf-watch {
@@ -2233,7 +2259,9 @@
   border-radius: 12px;
   background: var(--color-white);
   text-align: center;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .tp-related-card:hover {
@@ -2354,7 +2382,9 @@
   height: 72px;
   border-radius: 16px;
   background: var(--color-maroon);
-  transition: background 140ms ease, transform 140ms ease;
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
 }
 
 .nf-review-nav img.is-flipped {

@@ -275,9 +275,9 @@ export function ThemeFeedback({ theme }: { theme: GridTheme }) {
 export function DiscoverMore({ themes, onOpen }: { themes: GridTheme[]; onOpen: (theme: GridTheme) => void }) {
   return (
     <section className="ps-discover" aria-labelledby="ps-discover-title">
-      <h2 id="ps-discover-title">Discover more</h2>
+      <h2 id="ps-discover-title">Discover more themes</h2>
       <div className="ps-discover-grid">
-        {themes.map((theme, index) => (
+        {themes.slice(0, 2).map((theme, index) => (
           <ThemeCard
             key={theme.id}
             theme={theme}

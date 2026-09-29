@@ -10,7 +10,11 @@ import { catalog, PostCard, PostLayouts, type MetricStyle } from "./PageStyle";
 
 const METRIC_SAMPLE = catalog()[0];
 const METRIC_VARIANTS: { id: MetricStyle; name: string; note: string }[] = [
-  { id: "spaced", name: "Spaced icons", note: "What the theme page uses. Outline icons in black, grouped by spacing alone." },
+  {
+    id: "spaced",
+    name: "Spaced icons",
+    note: "What the theme page uses. Outline icons in black, grouped by spacing alone.",
+  },
   { id: "pill", name: "Pills", note: "Same chips as the engagement page. Felt heavy under every post." },
   { id: "circle", name: "Icon circles", note: "Each icon in its own grey circle, number beside it." },
   { id: "plain", name: "Plain icons", note: "Lightest option. Icon and number, no container." },
@@ -253,8 +257,8 @@ export function DesignDecisions() {
             <p className="chat-explore-flag">Cards</p>
           </header>
           <p className="chat-explore-note">
-            How the theme page lays out its posts. We went with Cards, a 4-up grid, so people can scan the whole theme at
-            once. Filmstrip, Pages and Stage stay here for reference.
+            How the theme page lays out its posts. We went with Cards, a 4-up grid, so people can scan the whole theme
+            at once. Filmstrip, Pages and Stage stay here for reference.
           </p>
           <PostLayouts />
         </article>
@@ -474,7 +478,8 @@ export function DesignDecisions() {
             <p className="chat-explore-flag">Exploring</p>
           </header>
           <p className="chat-explore-note">
-            A small stack of post thumbnails with the total number of posts in the theme. This is what the newsfeed uses.
+            A small stack of post thumbnails with the total number of posts in the theme. This is what the newsfeed
+            uses.
           </p>
           <ThemeGrid variant="gray" layout="split" sources="posts" />
         </article>
@@ -512,11 +517,16 @@ export function DesignDecisions() {
         <article className="chat-explore">
           <header className="chat-explore-head">
             <div>
-              <p className="chat-explore-meta">Sep 25 · Newsfeed · Open</p>
+              <p className="chat-explore-meta">Sep 25 · Newsfeed · Superseded Sep 29</p>
               <h2>Browsing all 52 themes</h2>
             </div>
-            <p className="chat-explore-flag">Exploring</p>
+            <p className="chat-explore-flag">Superseded</p>
           </header>
+          <p className="chat-explore-note">
+            Superseded by a 14-day default. The feed shows every theme from the last 14 days (about 52 raw themes, 21
+            after merging near-duplicates, 17 with 5+ posts) with no cap. “Show all themes” reveals the rest of the
+            timeframe at once. Longer timeframes add older themes inline under “Week of …” dividers. Kept for reference:
+          </p>
           <p className="chat-explore-note">
             “Show all 52 themes” needs a way to move through a lot of content. Five ways to do it, each working with the
             same 52 themes. Switch between them to compare.

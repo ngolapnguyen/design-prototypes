@@ -7,6 +7,7 @@ export const TIME_OPTIONS = [
   "All time",
   "Last 48 hours",
   "Last 7 days",
+  "Last 14 days",
   "Last 30 days",
   "Last 3 months",
   "Last 6 months",
@@ -147,14 +148,22 @@ function CheckMark() {
   );
 }
 
-export function FiltersMenu({ selected, onChange }: { selected: string[]; onChange: (next: string[]) => void }) {
-  const [open, setOpen] = useState<string[]>(["platform", "relationship"]);
+export function FiltersMenu({
+  groups = FILTER_GROUPS,
+  selected,
+  onChange,
+}: {
+  groups?: FilterGroup[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [open, setOpen] = useState<string[]>([groups[0]?.id, groups[1]?.id].filter(Boolean) as string[]);
   const toggle = (label: string) =>
     onChange(selected.includes(label) ? selected.filter((item) => item !== label) : [...selected, label]);
 
   return (
     <div className="nf-menu is-filters" role="dialog" aria-label="Posts filters">
-      {FILTER_GROUPS.map((group) => {
+      {groups.map((group) => {
         const expanded = open.includes(group.id);
         const count = group.options.concat(group.sub?.options ?? []).filter((item) => selected.includes(item)).length;
         return (

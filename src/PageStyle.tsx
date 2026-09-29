@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { assets } from "./assets";
-import { DEFAULT_FILTERS, FiltersMenu, Menu, SORT_OPTIONS, TIME_OPTIONS } from "./FeedControls";
+import { FILTER_GROUPS, FiltersMenu, Menu, SORT_OPTIONS } from "./FeedControls";
 import { ClipPlay } from "./Homepage";
-import { PlotTopBar, ThemeChat } from "./Newsfeed";
+import { PlotTopBar, ThemeChat, ThemeDownReasons } from "./Newsfeed";
 import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import type { PostId } from "./posts";
-import { GRID_THEMES, type GridTheme } from "./ThemeGrid";
+import { GRID_THEMES, Votes, type GridTheme } from "./ThemeGrid";
 import { DiscoverMore, ThemeFeedback, TopCreators } from "./ThemeSections";
 import "./homepage.css";
 import "./newsfeed.css";
@@ -120,17 +120,21 @@ export function InstagramIcon() {
 
 type StyleId = "grid" | "strip" | "pages" | "stage";
 export type MetricStyle = "spaced" | "circle" | "plain" | "pill";
-type SortId = (typeof SORT_OPTIONS)[number];
-type TimeId = (typeof TIME_OPTIONS)[number];
-type MenuId = "time" | "sort" | "filters" | null;
+const THEME_SORTS = [
+  "Views",
+  "Recency",
+  "Likes",
+  "Comments",
+  "Engagement rate",
+  "Total engagement",
+  "Follower count",
+] as const satisfies readonly (typeof SORT_OPTIONS)[number][];
+type SortId = (typeof THEME_SORTS)[number];
+type MenuId = "sort" | "filters" | null;
 
-const TIME_DAYS: Partial<Record<TimeId, number>> = {
-  "Last 48 hours": 2,
-  "Last 7 days": 7,
-  "Last 30 days": 30,
-  "Last 3 months": 90,
-  "Last 6 months": 180,
-};
+const THEME_FILTER_GROUPS = FILTER_GROUPS.filter((group) =>
+  ["platform", "sentiment", "followers", "organic"].includes(group.id),
+);
 
 const STYLES: { id: StyleId; label: string }[] = [
   { id: "grid", label: "Cards" },
@@ -296,37 +300,49 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
   const all = useMemo(() => catalog(theme), [theme]);
   const [open, setOpen] = useState<OpenPost | null>(null);
   const [ask, setAsk] = useState<{ id: string; question?: AskPrompt } | null>(null);
+  const [vote, setVote] = useState<"up" | "down" | null>(null);
+  const [askWhy, setAskWhy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+
+  const ping = (message: string) => {
+    window.clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const onVote = (next: "up" | "down") => {
+    const value = vote === next ? null : next;
+    setVote(value);
+    setAskWhy(value === "down");
+    if (value === "up") ping("Thanks for the feedback. We’ll show more themes like this.");
+  };
   const prompts = ASK_PROMPTS[theme.id] ?? NYX_PROMPTS;
   const [menu, setMenu] = useState<MenuId>(null);
-  const [time, setTime] = useState<TimeId>("Last 7 days");
   const [sort, setSort] = useState<SortId>("Views");
-  const [filters, setFilters] = useState<string[]>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
 
   const posts = useMemo(() => {
-    const days = TIME_DAYS[time] ?? 365;
     const selectedPlatforms = [
       filters.includes("Instagram") ? "Instagram" : null,
       filters.includes("TikTok") ? "TikTok" : null,
       filters.includes("YouTube Shorts") ? "YouTube" : null,
     ].filter(Boolean) as CatalogPost["platform"][];
-    const selectedLocations = LOCATIONS.filter((location) => filters.includes(location));
     return all
-      .filter((post) => post.dayOffset < days)
       .filter((post) => (selectedPlatforms.length ? selectedPlatforms.includes(post.platform) : true))
-      .filter((post) => (selectedLocations.length ? selectedLocations.includes(post.location) : true))
       .slice()
       .sort((a, b) => {
-        if (sort === "Recency" || sort === "Date reviewed") return a.dayOffset - b.dayOffset;
+        if (sort === "Recency") return a.dayOffset - b.dayOffset;
         if (sort === "Views") return b.views - a.views;
-        if (sort === "Likes" || sort === "Saves" || sort === "Shares") return b.likes - a.likes;
+        if (sort === "Likes") return b.likes - a.likes;
         if (sort === "Comments") return b.comments - a.comments;
         if (sort === "Engagement rate") return b.engagement - a.engagement;
         if (sort === "Total engagement") return b.likes + b.comments - (a.likes + a.comments);
         if (sort === "Follower count") return b.views - a.views;
         return a.location.localeCompare(b.location);
       });
-  }, [all, time, sort, filters]);
+  }, [all, sort, filters]);
 
   const filterCount = filters.length;
 
@@ -389,18 +405,6 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
             <h2 className="ps-section-title">Posts</h2>
             <button
               type="button"
-              className={menu === "time" ? "nf-control is-open" : "nf-control"}
-              aria-expanded={menu === "time"}
-              onClick={() => setMenu(menu === "time" ? null : "time")}
-            >
-              <span className="nf-control-icon">
-                <img src={icon("icon-calendar.svg")} alt="" width={16} height={16} />
-              </span>
-              {time}
-              <img className="nf-caret" src={icon("icon-caret.svg")} alt="" width={16} height={16} />
-            </button>
-            <button
-              type="button"
               className={menu === "sort" ? "nf-control is-open" : "nf-control"}
               aria-expanded={menu === "sort"}
               onClick={() => setMenu(menu === "sort" ? null : "sort")}
@@ -427,25 +431,12 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
               <img className="nf-caret" src={icon("icon-caret.svg")} alt="" width={16} height={16} />
             </button>
 
-            {menu === "time" ? (
-              <Menu
-                label="Timeframe"
-                className="is-time"
-                variant="radio"
-                options={TIME_OPTIONS}
-                value={time}
-                onPick={(value) => {
-                  if (value !== "Custom range") setTime(value);
-                  setMenu(null);
-                }}
-              />
-            ) : null}
             {menu === "sort" ? (
               <Menu
                 label="Sort"
                 className="is-sort"
                 variant="check"
-                options={SORT_OPTIONS}
+                options={THEME_SORTS}
                 value={sort}
                 onPick={(value) => {
                   setSort(value);
@@ -455,6 +446,7 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
             ) : null}
             {menu === "filters" ? (
               <FiltersMenu
+                groups={THEME_FILTER_GROUPS}
                 selected={filters}
                 onChange={(next) => {
                   setFilters(next);
@@ -515,7 +507,16 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
                 <img src={icon("icon-track.svg")} alt="" />
                 Generate report
               </button>
+              <Votes vote={vote} onVote={onVote} />
             </div>
+            {askWhy ? (
+              <ThemeDownReasons
+                onSave={() => {
+                  setAskWhy(false);
+                  ping("Thanks for the feedback. We’ll show fewer themes like this.");
+                }}
+              />
+            ) : null}
             <div className="ps-asks">
               <p>Try asking</p>
               {prompts.map((prompt) => (
@@ -527,6 +528,11 @@ export function PageStyle({ onBack, initialThemeId }: { onBack?: () => void; ini
           </aside>
         )}
       </div>
+      {toast ? (
+        <p className="nf-toast" role="status">
+          {toast}
+        </p>
+      ) : null}
     </>
   );
 }

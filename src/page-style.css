@@ -122,9 +122,10 @@
   overflow: hidden;
   max-width: 100%;
   color: var(--color-black);
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.32px;
   line-height: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -172,8 +173,8 @@
 
 .ps-creator-followers {
   color: var(--color-gray-800);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -272,8 +273,13 @@
 }
 
 .ps-discover .tg-card.is-split {
-  min-height: 280px;
+  height: 280px;
+  min-height: 0;
   background: var(--color-gray-200);
+}
+
+.ps-discover .tg-card.is-split .tg-single .fc-post-inner {
+  width: 150px;
 }
 
 .ps-creators-section,
@@ -311,16 +317,16 @@
 .ps-rail,
 .ps .nf-side {
   position: sticky;
-  top: 120px;
+  top: 148px;
   margin-top: -10px;
   right: auto;
   bottom: auto;
   flex: none;
-  width: 340px;
+  width: 356px;
 }
 
 .ps .nf-side {
-  height: calc(100dvh - 132px);
+  height: calc(100dvh - 160px);
 }
 
 .nf-less.is-thanks {
@@ -504,8 +510,54 @@
 
 .ps-cta {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.ps-cta .cc-btn {
+  padding: 0 12px;
+}
+
+.ps-cta .nf-votes {
+  margin-left: auto;
+}
+
+.ps .nf-less-question p {
+  color: var(--color-black);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.ps .nf-pill {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--color-gray-200);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.ps-insights .nf-pill {
+  background: var(--color-white);
+}
+
+.ps .nf-pill:hover {
+  background: var(--color-gray-300);
+}
+
+.ps .nf-pill.is-on {
+  background: #600426;
+  color: #f2e6ea;
+}
+
+.nf-down-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-gray-300);
 }
 
 .ps-asks {
