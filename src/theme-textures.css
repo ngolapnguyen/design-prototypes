@@ -1326,9 +1326,12 @@
 }
 
 .tg-feature-stats {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   gap: 8px;
+  width: max-content;
+  max-width: 100%;
   margin-top: 8px;
 }
 
