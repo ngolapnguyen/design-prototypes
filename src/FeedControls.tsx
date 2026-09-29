@@ -18,13 +18,11 @@ export const TIME_OPTIONS = [
 
 export const SORT_OPTIONS = [
   "Recency",
-  "Date reviewed",
   "Views",
   "Likes",
   "Comments",
   "Engagement rate",
   "Total engagement",
-  "Saves",
   "Shares",
   "Follower count",
 ] as const;
@@ -48,11 +46,6 @@ export const FILTER_GROUPS: FilterGroup[] = [
     },
   },
   {
-    id: "relationship",
-    label: "Relationship strength",
-    options: ["Very strong", "Strong", "Neutral", "Weak", "Very weak"],
-  },
-  {
     id: "followers",
     label: "Followers",
     options: ["Under 10K", "10K–100K", "100K–1M", "Over 1M"],
@@ -69,19 +62,9 @@ export const FILTER_GROUPS: FilterGroup[] = [
   },
   { id: "organic", label: "Organic/Paid", options: ["Organic", "Paid"] },
   {
-    id: "plays",
-    label: "Minimum play count",
-    options: ["1K+", "10K+", "100K+", "1M+"],
-  },
-  {
     id: "language",
     label: "Language",
     options: ["English", "Spanish", "French", "Portuguese"],
-  },
-  {
-    id: "signal",
-    label: "Signal",
-    options: ["Brand mention", "Product tag", "Hashtag", "Logo in video"],
   },
   {
     id: "country",
@@ -96,9 +79,6 @@ export const DEFAULT_FILTERS = [
   "Stories",
   "TikTok",
   "YouTube Shorts",
-  "Very strong",
-  "Weak",
-  "Very weak",
 ];
 
 export function Menu<T extends string>({

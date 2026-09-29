@@ -252,7 +252,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
   const ordered = [...STORIES].sort((a, b) => {
     if (sort === "Views") return b.views - a.views;
     if (sort === "Engagement rate") return b.engagement / b.views - a.engagement / a.views;
-    if (["Likes", "Comments", "Total engagement", "Saves", "Shares"].includes(sort)) return b.engagement - a.engagement;
+    if (["Likes", "Comments", "Total engagement", "Shares"].includes(sort)) return b.engagement - a.engagement;
     if (sort === "Follower count") return b.posts - a.posts;
     return a.hoursAgo - b.hoursAgo;
   });
@@ -464,7 +464,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                 <span className="nf-control-icon">
                   <img src={nf.filter} alt="" width={16} height={16} />
                 </span>
-                Posts filters
+                Theme filters
                 {filters.length ? <span className="nf-control-count">{filters.length}</span> : null}
                 <img className="nf-caret" src={nf.caret} alt="" width={16} height={16} />
               </button>
