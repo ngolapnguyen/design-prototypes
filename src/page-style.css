@@ -334,6 +334,10 @@
   background: var(--color-white);
 }
 
+.ps-discover .tg-card.is-split .tg-single-body {
+  background: var(--color-gray-200);
+}
+
 .ps-discover .tg-card.is-split .tg-single .fc-post-inner {
   width: 150px;
 }

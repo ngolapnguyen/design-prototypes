@@ -2477,7 +2477,7 @@
 }
 
 .nf-stories .tg-card {
-  background: var(--color-white);
+  background: var(--color-gray-200);
 }
 
 .nf-stories .tg-card.is-split h3 {
@@ -2505,5 +2505,5 @@
 }
 
 .nf-stories .tg-feature-stats > span {
-  background: var(--color-gray-200);
+  background: var(--color-gray-300);
 }
