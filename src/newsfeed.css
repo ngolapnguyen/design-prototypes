@@ -2477,7 +2477,7 @@
 }
 
 .nf-stories .tg-card {
-  background: var(--color-gray-200);
+  background: var(--color-white);
 }
 
 .nf-stories .tg-card.is-split h3 {
@@ -2488,6 +2488,22 @@
   letter-spacing: -0.96px;
 }
 
+.nf-stories .tg-feature .tg-feature-stage {
+  background-image: var(--tex-hero);
+}
+
+.nf-stories > .tg-card:nth-child(3n + 1 of .is-split) .tg-single:not(.tg-panel) {
+  background-image: var(--tex-1);
+}
+
+.nf-stories > .tg-card:nth-child(3n + 2 of .is-split) .tg-single:not(.tg-panel) {
+  background-image: var(--tex-2);
+}
+
+.nf-stories > .tg-card:nth-child(3n + 3 of .is-split) .tg-single:not(.tg-panel) {
+  background-image: var(--tex-3);
+}
+
 .nf-stories .tg-feature-stats > span {
-  background: var(--color-gray-300);
+  background: var(--color-gray-200);
 }

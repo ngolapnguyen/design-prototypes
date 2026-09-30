@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { AssistantBubble, Composer, UserBubble } from "./chat-ui";
 import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import type { PostId } from "./posts";
@@ -9,6 +9,14 @@ import { PAST_THEMES, type PastTheme } from "./PastThemes";
 import "./newsfeed.css";
 
 const file = (path: string) => `${import.meta.env.BASE_URL}assets/newsfeed/${path}`;
+const texture = (name: string) => `url(${import.meta.env.BASE_URL}assets/textures/${name})`;
+
+const STORY_TEXTURES = {
+  "--tex-hero": texture("hero-starburst.png"),
+  "--tex-1": texture("grain-blue.jpg"),
+  "--tex-2": texture("grain-lime.jpg"),
+  "--tex-3": texture("grain-pink.jpg"),
+} as CSSProperties;
 
 const nf = {
   menu: file("icon-menu.svg"),
@@ -504,7 +512,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
             </div>
           </div>
 
-          <div className="nf-stories tg-grid">
+          <div className="nf-stories tg-grid" style={STORY_TEXTURES}>
             {arrangeFeed(stories, feedback !== "dismissed").map((slot, index) => {
               if (slot.kind === "feedback") {
                 return (

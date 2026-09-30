@@ -346,6 +346,7 @@ export function ThemeCard({
   sourcesChrome,
   cta,
   kicker,
+  texture,
 }: {
   theme: GridTheme;
   variant: GridVariant;
@@ -363,6 +364,7 @@ export function ThemeCard({
   sourcesChrome?: SourcesChrome;
   cta?: string;
   kicker?: string;
+  texture?: string;
 }) {
   const posts = Array.from({ length: POSTS_PER_THEME }, (_, index) => theme.posts[index % theme.posts.length]);
 
@@ -406,7 +408,7 @@ export function ThemeCard({
         className={`tg-card is-single is-${layout}${onOpen ? " is-clickable" : ""}${
           layout === "split" ? (seed % 2 === 0 ? " is-tilt-pos" : " is-tilt-neg") : ""
         }`}
-        style={themeWellStyle(theme)}
+        style={{ ...themeWellStyle(theme), ...(texture ? { "--tg-grain": texture } : {}) } as CSSProperties}
         onClick={onOpen}
       >
         <div

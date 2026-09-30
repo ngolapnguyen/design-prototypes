@@ -281,6 +281,16 @@ export function ThemeFeedback({
   return <ThemeFeedbackCard theme={theme} value={value} onChange={onChange} />;
 }
 
+const DISCOVER_TEXTURES: Record<string, string> = {
+  nyx: "hero-starburst.png",
+  vb: "grain-blue.jpg",
+  anne: "grain-lime.jpg",
+  lulu: "grain-pink.jpg",
+};
+
+const discoverTexture = (id: string) =>
+  DISCOVER_TEXTURES[id] ? `url(${import.meta.env.BASE_URL}assets/textures/${DISCOVER_TEXTURES[id]})` : undefined;
+
 export function DiscoverMore({ themes, onOpen }: { themes: GridTheme[]; onOpen: (theme: GridTheme) => void }) {
   return (
     <section className="ps-discover" aria-labelledby="ps-discover-title">
@@ -293,6 +303,7 @@ export function DiscoverMore({ themes, onOpen }: { themes: GridTheme[]; onOpen: 
             variant="gray"
             seed={index + 3}
             layout="split"
+            texture={discoverTexture(theme.id)}
             onOpen={() => onOpen(theme)}
           />
         ))}

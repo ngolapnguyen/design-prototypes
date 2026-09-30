@@ -331,7 +331,7 @@
 .ps-discover .tg-card.is-split {
   height: 280px;
   min-height: 0;
-  background: var(--color-gray-200);
+  background: var(--color-white);
 }
 
 .ps-discover .tg-card.is-split .tg-single .fc-post-inner {
