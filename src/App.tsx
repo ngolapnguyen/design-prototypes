@@ -1,10 +1,21 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { assets } from "./assets";
 import { CommentSummary } from "./CommentSummary";
+import {
+  BubbleTip,
+  IntroModal,
+  PlottingModal,
+  RichTip,
+  SpotlightPopover,
+  type IntroEmphasis,
+  type IntroVariant,
+  type LaunchId,
+} from "./FeatureIntro";
 import { Icon } from "./Icon";
-import { PrototypeNav } from "./PrototypeNav";
+import { ComponentGallery } from "./ComponentGallery";
+import { PrototypeNav, type ProtoView } from "./PrototypeNav";
 import { SentimentScore } from "./SentimentScore";
-import { posts, type PostId, type SentimentMode, type SummaryMode } from "./posts";
+import { posts } from "./posts";
 
 function CreatorMeta({ date, followers }: { date: string; followers: string }) {
   return (
@@ -23,10 +34,35 @@ function CreatorMeta({ date, followers }: { date: string; followers: string }) {
   );
 }
 
+const INTRO_KEY = "lulu-intro-variant";
+const INTRO_VARIANTS: IntroVariant[] = ["spotlight", "bubble", "bubble-titled", "rich", "rich-stacked", "modal", "plotting", "plotting-serif", "off"];
+const VIEW_KEY = "lulu-view";
+const EMPHASIS_KEY = "lulu-intro-emphasis";
+const EMPHASES: IntroEmphasis[] = ["dim", "veil", "blur", "ring", "glow", "none"];
+
+type IntroStage = { step: "intro" } | { step: "tooltip"; id: LaunchId };
+
+const firstStage = (variant: IntroVariant): IntroStage | null =>
+  variant === "off"
+    ? null
+    : variant === "spotlight" || variant === "bubble" || variant === "bubble-titled" || variant === "rich" || variant === "rich-stacked"
+      ? { step: "tooltip", id: "comments" }
+      : { step: "intro" };
+
 export default function App() {
-  const [postId, setPostId] = useState<PostId>("1");
-  const [summaryMode, setSummaryMode] = useState<SummaryMode>("paragraph");
-  const [sentimentMode, setSentimentMode] = useState<SentimentMode>("score");
+  const [view, setView] = useState<ProtoView>(() =>
+    localStorage.getItem(VIEW_KEY) === "components" ? "components" : "prototype",
+  );
+  const [intro, setIntro] = useState<IntroVariant>(() => {
+    const saved = localStorage.getItem(INTRO_KEY) as IntroVariant | null;
+    return saved && INTRO_VARIANTS.includes(saved) ? saved : "spotlight";
+  });
+  const [emphasis, setEmphasis] = useState<IntroEmphasis>(() => {
+    const saved = localStorage.getItem(EMPHASIS_KEY) as IntroEmphasis | null;
+    return saved && EMPHASES.includes(saved) ? saved : "dim";
+  });
+  const [stage, setStage] = useState<IntroStage | null>(() => firstStage(intro));
+  const commentCard = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<"post" | "creator" | "brand">("post");
   const [captionOpen, setCaptionOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -36,34 +72,64 @@ export default function App() {
   const [openThread, setOpenThread] = useState<string | null>(null);
   const [slide, setSlide] = useState(0);
 
-  const post = posts[postId];
+  const post = posts["1"];
   const slides = post.slides ?? [];
+  const active = tab === "post" ? stage : null;
+  const tooltip = active?.step === "tooltip" ? active.id : null;
+  const closeIntro = () => setStage(null);
+  const overlay = emphasis === "dim" || emphasis === "veil" || emphasis === "blur";
 
-  const switchPost = (id: PostId) => {
-    setPostId(id);
-    setCaptionOpen(false);
-    setSummaryOpen(false);
-    setWhyOpen(false);
-    setNote("");
-    setNotes([]);
-    setOpenThread(null);
-    setTab("post");
-    setSlide(0);
+  useEffect(() => {
+    if (active?.step === "tooltip") commentCard.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [active]);
+
+  const replayIntro = (variant: IntroVariant = intro) => {
+    localStorage.setItem(INTRO_KEY, variant);
+    setIntro(variant);
+    setStage(firstStage(variant));
+    window.scrollTo({ top: 0 });
   };
+
+  const switchView = (next: ProtoView) => {
+    localStorage.setItem(VIEW_KEY, next);
+    setView(next);
+    if (next === "prototype") setStage(firstStage(intro));
+    window.scrollTo({ top: 0 });
+  };
+
+  const nav = (
+    <PrototypeNav
+      view={view}
+      onView={switchView}
+      intro={intro}
+      onIntro={replayIntro}
+      onReplay={() => replayIntro()}
+      emphasis={emphasis}
+      onEmphasis={(value) => {
+        localStorage.setItem(EMPHASIS_KEY, value);
+        setEmphasis(value);
+        if (!stage) setStage(firstStage(intro));
+      }}
+    />
+  );
+
+  if (view === "components") {
+    return (
+      <>
+        {nav}
+        <ComponentGallery />
+      </>
+    );
+  }
 
   return (
     <>
-      <PrototypeNav
-        postId={postId}
-        summaryMode={summaryMode}
-        sentimentMode={sentimentMode}
-        onPost={switchPost}
-        onSummary={(mode) => {
-          setSummaryMode(mode);
-          setOpenThread(null);
-        }}
-        onSentiment={setSentimentMode}
-      />
+      {nav}
+      {tooltip && overlay ? <div className={`intro-scrim is-${emphasis}`} onClick={closeIntro} /> : null}
+      {active?.step === "intro" && intro === "modal" ? <IntroModal emphasis={emphasis} onDismiss={closeIntro} /> : null}
+      {active?.step === "intro" && (intro === "plotting" || intro === "plotting-serif") ? (
+        <PlottingModal emphasis={emphasis} serif={intro === "plotting-serif"} onDismiss={closeIntro} />
+      ) : null}
       <main className="app">
         <aside className="media-col">
           <div className="media-shell">
@@ -284,34 +350,46 @@ export default function App() {
                 </div>
               </article>
 
-              <article className="card comment-card">
+              <article
+                ref={commentCard}
+                className={`card comment-card${tooltip ? ` is-spotlit is-${emphasis}` : ""}`}
+              >
+                {tooltip && (intro === "bubble" || intro === "bubble-titled") ? (
+                  <BubbleTip
+                    id={tooltip}
+                    titled={intro === "bubble-titled"}
+                    onSkip={closeIntro}
+                  />
+                ) : null}
+                {tooltip && (intro === "rich" || intro === "rich-stacked") ? (
+                  <RichTip
+                    id={tooltip}
+                    stacked={intro === "rich-stacked"}
+                    onNext={(next) => setStage(next ? { step: "tooltip", id: next } : null)}
+                    onSkip={closeIntro}
+                  />
+                ) : null}
+                {tooltip && intro === "spotlight" ? (
+                  <SpotlightPopover
+                    id={tooltip}
+                    onNext={(next) => setStage(next ? { step: "tooltip", id: next } : null)}
+                    onSkip={closeIntro}
+                  />
+                ) : null}
                 <div className="comment-head">
                   <div>
-                    <h2 className="section-title">Comment Summary</h2>
+                    <div className="comment-title-row">
+                      <h2 className="section-title">Comment Summary</h2>
+                    </div>
                     <p className="comment-meta">
                       {post.commentCount} comments, {post.pulled}
                     </p>
                   </div>
-                  {sentimentMode === "score" ? (
-                    <SentimentScore
-                      score={post.score}
-                      mode={sentimentMode}
-                      sentiment={post.sentiment}
-                      tone={post.scoreTone}
-                    />
-                  ) : null}
                 </div>
-                {sentimentMode === "chart" ? (
-                  <SentimentScore
-                    score={post.score}
-                    mode={sentimentMode}
-                    sentiment={post.sentiment}
-                    tone={post.scoreTone}
-                  />
-                ) : null}
+                <SentimentScore score={post.score} mode="chart" sentiment={post.sentiment} tone={post.scoreTone} />
                 <CommentSummary
                   post={post}
-                  mode={summaryMode}
+                  mode="themes"
                   openThread={openThread}
                   onOpen={setOpenThread}
                   onClose={() => setOpenThread(null)}
