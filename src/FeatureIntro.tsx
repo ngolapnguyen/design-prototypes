@@ -167,15 +167,13 @@ export function RichTip({
   );
 }
 
-type PlottingPreview = { kind: "plot" } | { kind: "image"; src: string };
-
 type PlottingAction = { kind: "try" | "setup" | "learn"; label: string; href: string };
 
 const PLOTTING: {
   name: string;
   body: string;
   icon: "dataOrg" | "messageQuestion" | "trello";
-  preview: PlottingPreview;
+  preview: string;
   action?: PlottingAction;
   notesHref?: string;
 }[] = [
@@ -183,14 +181,14 @@ const PLOTTING: {
     name: "Plot MCP",
     body: "Your brand data, in whatever AI assistant you already use.",
     icon: "dataOrg",
-    preview: { kind: "plot" },
+    preview: assets.plotting.previewMcp,
     action: { kind: "setup", label: "Set up", href: "#plot-mcp-setup" },
   },
   {
     name: "Comment Labels",
     body: "Reply-ready drafts for the comments that matter most.",
     icon: "messageQuestion",
-    preview: { kind: "image", src: assets.plotting.previewLabels },
+    preview: assets.plotting.previewLabels,
     action: { kind: "try", label: "Try it", href: "#comment-suggestions" },
     notesHref: "#release-notes-comment-suggestions",
   },
@@ -198,42 +196,10 @@ const PLOTTING: {
     name: "Comment Summary",
     body: "See what your comments are saying without scrolling through them all.",
     icon: "trello",
-    preview: { kind: "image", src: assets.plotting.previewSharing },
+    preview: assets.plotting.previewSharing,
     action: { kind: "try", label: "Try it", href: "#comment-summary" },
   },
 ];
-
-const PLOT_TOP_POSTS = [
-  { handle: "@marisolgetsready", value: "94.1K", icon: "tiktok" as const },
-  { handle: "@thequietshelf", value: "51.3K", icon: "instagram" as const },
-  { handle: "@dermdiaries", value: "38.7K", icon: "tiktok" as const },
-];
-
-function PlotPreview({ className }: { className: string }) {
-  return (
-    <div className={`intro-plot-preview ${className}`}>
-      <img className="intro-plot-bg" src={assets.plotting.bgBase} alt="" />
-      <img className="intro-plot-bg" src={assets.plotting.bgOverlay} alt="" />
-      <p className="intro-plot-ask">Which posts drove the most engagement last week?</p>
-      <div className="intro-plot-answer">
-        <p className="intro-plot-label">Top posts • Aug 4 - 10</p>
-        <ul>
-          {PLOT_TOP_POSTS.map((row) => (
-            <li key={row.handle}>
-              <span>
-                <span className={`intro-plot-social is-${row.icon}`}>
-                  <img src={assets.plotting[row.icon]} alt="" />
-                </span>
-                {row.handle}
-              </span>
-              <strong>{row.value}</strong>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
 
 export function PlottingModal({
   emphasis,
@@ -333,14 +299,14 @@ export function PlottingModal({
               <img src={assets.rich.close} alt="" width={9.5} height={9.5} />
             </span>
           </button>
-          {PLOTTING.map(({ name, preview }, index) => {
-            const className = `intro-plot-slide${index === current ? " is-active" : ""}`;
-            return preview.kind === "image" ? (
-              <img key={name} className={className} src={preview.src} alt="" />
-            ) : (
-              <PlotPreview key={name} className={className} />
-            );
-          })}
+          {PLOTTING.map(({ name, preview }, index) => (
+            <img
+              key={name}
+              className={`intro-plot-slide${index === current ? " is-active" : ""}`}
+              src={preview}
+              alt=""
+            />
+          ))}
         </div>
       </div>
     </div>
