@@ -2,7 +2,16 @@ import { useState } from "react";
 import { assets } from "./assets";
 
 export type IntroVariant =
-  "spotlight" | "bubble" | "bubble-titled" | "rich" | "rich-stacked" | "modal" | "plotting" | "plotting-serif" | "off";
+  | "spotlight"
+  | "bubble"
+  | "bubble-titled"
+  | "logo"
+  | "rich"
+  | "rich-stacked"
+  | "modal"
+  | "plotting"
+  | "plotting-serif"
+  | "off";
 
 export type IntroEmphasis = "dim" | "veil" | "blur" | "ring" | "glow" | "none";
 
@@ -12,6 +21,7 @@ export type Launch = {
   id: LaunchId;
   title: string;
   body: string;
+  gist: string;
   tag: "New" | "Updated";
   lead: string;
   rest: string;
@@ -23,6 +33,7 @@ export const LAUNCHES: Launch[] = [
     id: "comments",
     title: "See what your comments are saying",
     body: "Get the gist of every comment on your post: overall sentiment and what people keep bringing up. No more scrolling.",
+    gist: "Get the gist of every comment on your post: overall sentiment and what people keep bringing up.",
     tag: "New",
     lead: "Comment Summary",
     rest: "is here. Get the gist of every comment on your post without scrolling through them all.",
@@ -32,6 +43,7 @@ export const LAUNCHES: Launch[] = [
     id: "sentiment",
     title: "Sentiment now shows as a score",
     body: "One number for how people feel about a post, with the breakdown a click away.",
+    gist: "One number for how people feel about a post, with the breakdown a click away.",
     tag: "Updated",
     lead: "Sentiment",
     rest: "now shows as one score for how people feel, with the breakdown a click away.",
@@ -68,6 +80,45 @@ export function BubbleTip({
       ) : (
         <h3 className="intro-bubble-title">{item.title}</h3>
       )}
+    </div>
+  );
+}
+
+export function LogoTip({
+  id = "comments",
+  onNext,
+  onSkip,
+}: {
+  id?: LaunchId;
+  onNext: (next: LaunchId | null) => void;
+  onSkip: () => void;
+}) {
+  const index = Math.max(
+    0,
+    LAUNCHES.findIndex((item) => item.id === id),
+  );
+  const item = LAUNCHES[index];
+  const next = LAUNCHES[index + 1]?.id ?? null;
+  return (
+    <div className="intro-pop is-logo" role="dialog" aria-label={item.title}>
+      <div className="intro-pop-head">
+        <div className="intro-pop-copy">
+          <img className="intro-pop-logo" src={assets.intro.plotLogo} alt="" width={28.8} height={28.8} />
+          <h3 className="intro-pop-title">{item.title}</h3>
+          <p className="intro-pop-body">{item.gist}</p>
+        </div>
+        <button className="intro-pop-close" type="button" aria-label="Close" onClick={onSkip}>
+          <img src={assets.intro.closeSm} alt="" width={12} height={12} />
+        </button>
+      </div>
+      <div className="intro-btns intro-pop-actions">
+        <button className="intro-btn is-primary is-sm" type="button" onClick={() => onNext(next)}>
+          Got it
+        </button>
+        <button className="intro-btn is-sm" type="button" onClick={onSkip}>
+          Not now
+        </button>
+      </div>
     </div>
   );
 }

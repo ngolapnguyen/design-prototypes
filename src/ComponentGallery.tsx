@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { BubbleTip, IntroModal, PlottingModal, RichTip, type LaunchId, type RichCaret } from "./FeatureIntro";
+import { BubbleTip, IntroModal, LogoTip, PlottingModal, RichTip, type LaunchId, type RichCaret } from "./FeatureIntro";
 
-type TipKind = "bubble" | "bubble-titled" | "rich";
+type TipKind = "bubble" | "bubble-titled" | "logo" | "rich";
 
 function TipDemo({ kind, caret = "right-top" }: { kind: TipKind; caret?: RichCaret }) {
   const [id, setId] = useState<LaunchId>("comments");
@@ -16,6 +16,8 @@ function TipDemo({ kind, caret = "right-top" }: { kind: TipKind; caret?: RichCar
       <article className="card gallery-target">
         {kind === "rich" ? (
           <RichTip key={`${caret}-${run}`} id={id} caret={caret} onNext={onNext} onSkip={restart} />
+        ) : kind === "logo" ? (
+          <LogoTip key={run} id={id} onNext={onNext} onSkip={restart} />
         ) : (
           <BubbleTip key={run} id={id} titled={kind === "bubble-titled"} onSkip={restart} />
         )}
@@ -255,9 +257,16 @@ export function ComponentGallery() {
       >
         <TipDemo kind="bubble-titled" />
       </GallerySection>
-      <RichTipSection index={3} />
-      <SingleModalSection index={4} />
-      <PlottingSection index={5} />
+      <GallerySection
+        index={3}
+        name="Tooltip · white + logo"
+        note="Quiet branded callout with a headline, a supporting line, and a clear way to say yes or later."
+      >
+        <TipDemo kind="logo" />
+      </GallerySection>
+      <RichTipSection index={4} />
+      <SingleModalSection index={5} />
+      <PlottingSection index={6} />
     </main>
   );
 }

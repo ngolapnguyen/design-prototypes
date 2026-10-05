@@ -1658,6 +1658,32 @@ button.flag-count:focus-visible {
   justify-content: space-between;
 }
 
+.intro-pop.is-logo {
+  border-radius: var(--radius-card);
+}
+
+.intro-pop.is-logo .intro-pop-copy {
+  width: 310px;
+}
+
+.intro-pop-logo {
+  display: block;
+}
+
+.intro-pop.is-logo .intro-pop-title {
+  text-wrap: balance;
+}
+
+.intro-pop.is-logo .intro-pop-body {
+  color: var(--color-gray-700);
+  font-size: 16px;
+  text-wrap: pretty;
+}
+
+.intro-pop-actions {
+  align-self: flex-end;
+}
+
 .intro-step {
   color: var(--color-black);
   font-family: "MF Ionica", serif;
@@ -2577,6 +2603,15 @@ button.flag-count:focus-visible {
     max-width: 294px;
   }
 
+  .intro-pop.is-logo {
+    width: min(350px, 100%);
+  }
+
+  .intro-pop.is-logo .intro-pop-copy {
+    width: auto;
+    max-width: 310px;
+  }
+
   .intro-bubble {
     top: auto;
     right: 0;
@@ -2782,6 +2817,10 @@ button.flag-count:focus-visible {
 
 .gallery-tip-stage.is-rich {
   padding: 48px 32px;
+}
+
+.gallery-tip-stage.is-logo {
+  padding-bottom: 160px;
 }
 
 .gallery-tip-stage:is(.is-caret-right-top, .is-caret-right-bottom) {
@@ -3001,6 +3040,10 @@ button.flag-count:focus-visible {
 @media (max-width: 1100px) {
   .gallery-tip-stage:not(.is-rich) {
     padding: 240px 16px 32px;
+  }
+
+  .gallery-tip-stage.is-logo {
+    padding-top: 280px;
   }
 }
 

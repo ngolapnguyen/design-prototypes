@@ -52,6 +52,7 @@ export const assets = {
     previewBase: file("/assets/intro/preview-base.png"),
     bgSmoothOrchid: file("/assets/intro/bg-smooth-orchid.png"),
     bgOrchidLayout: file("/assets/intro/bg-orchid-layout.png"),
+    plotLogo: file("/assets/intro/popover/plot-logo.svg"),
   },
   rich: {
     close: file("/assets/intro/rich/icon-close.svg"),

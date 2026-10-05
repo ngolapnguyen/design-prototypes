@@ -4,6 +4,7 @@ import { CommentSummary } from "./CommentSummary";
 import {
   BubbleTip,
   IntroModal,
+  LogoTip,
   PlottingModal,
   RichTip,
   SpotlightPopover,
@@ -35,7 +36,18 @@ function CreatorMeta({ date, followers }: { date: string; followers: string }) {
 }
 
 const INTRO_KEY = "lulu-intro-variant";
-const INTRO_VARIANTS: IntroVariant[] = ["spotlight", "bubble", "bubble-titled", "rich", "rich-stacked", "modal", "plotting", "plotting-serif", "off"];
+const INTRO_VARIANTS: IntroVariant[] = [
+  "spotlight",
+  "bubble",
+  "bubble-titled",
+  "logo",
+  "rich",
+  "rich-stacked",
+  "modal",
+  "plotting",
+  "plotting-serif",
+  "off",
+];
 const VIEW_KEY = "lulu-view";
 const EMPHASIS_KEY = "lulu-intro-emphasis";
 const EMPHASES: IntroEmphasis[] = ["dim", "veil", "blur", "ring", "glow", "none"];
@@ -45,7 +57,12 @@ type IntroStage = { step: "intro" } | { step: "tooltip"; id: LaunchId };
 const firstStage = (variant: IntroVariant): IntroStage | null =>
   variant === "off"
     ? null
-    : variant === "spotlight" || variant === "bubble" || variant === "bubble-titled" || variant === "rich" || variant === "rich-stacked"
+    : variant === "spotlight" ||
+        variant === "bubble" ||
+        variant === "bubble-titled" ||
+        variant === "logo" ||
+        variant === "rich" ||
+        variant === "rich-stacked"
       ? { step: "tooltip", id: "comments" }
       : { step: "intro" };
 
@@ -365,6 +382,13 @@ export default function App() {
                   <RichTip
                     id={tooltip}
                     stacked={intro === "rich-stacked"}
+                    onNext={(next) => setStage(next ? { step: "tooltip", id: next } : null)}
+                    onSkip={closeIntro}
+                  />
+                ) : null}
+                {tooltip && intro === "logo" ? (
+                  <LogoTip
+                    id={tooltip}
                     onNext={(next) => setStage(next ? { step: "tooltip", id: next } : null)}
                     onSkip={closeIntro}
                   />
