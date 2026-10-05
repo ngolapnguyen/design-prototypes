@@ -184,7 +184,7 @@ function PlottingRules() {
           </tbody>
         </table>
         <p className="gallery-rules-note">
-          In the sample below, Plot MCP needs setup, Comment Suggestions has release notes, and Comment Summary is the
+          In the sample below, Plot MCP needs setup, Comment Labels has release notes, and Comment Summary is the
           last item, so it ends with Done.
         </p>
         <h4>Rules</h4>

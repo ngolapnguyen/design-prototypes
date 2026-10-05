@@ -187,7 +187,7 @@ const PLOTTING: {
     action: { kind: "setup", label: "Set up", href: "#plot-mcp-setup" },
   },
   {
-    name: "Comment Suggestions",
+    name: "Comment Labels",
     body: "Reply-ready drafts for the comments that matter most.",
     icon: "messageQuestion",
     preview: { kind: "image", src: assets.plotting.previewLabels },
