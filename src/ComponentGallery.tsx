@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { BubbleTip, IntroModal, LogoTip, PlottingModal, RichTip, type LaunchId, type RichCaret } from "./FeatureIntro";
+import { BubbleTip, ConfirmDialog, IntroModal, PlottingModal, RichTip, type LaunchId, type RichCaret } from "./FeatureIntro";
 
-type TipKind = "bubble" | "bubble-titled" | "logo" | "rich";
+type TipKind = "bubble" | "bubble-titled" | "rich";
 
 function TipDemo({ kind, caret = "right-top" }: { kind: TipKind; caret?: RichCaret }) {
   const [id, setId] = useState<LaunchId>("comments");
@@ -16,8 +16,6 @@ function TipDemo({ kind, caret = "right-top" }: { kind: TipKind; caret?: RichCar
       <article className="card gallery-target">
         {kind === "rich" ? (
           <RichTip key={`${caret}-${run}`} id={id} caret={caret} onNext={onNext} onSkip={restart} />
-        ) : kind === "logo" ? (
-          <LogoTip key={run} id={id} onNext={onNext} onSkip={restart} />
         ) : (
           <BubbleTip key={run} id={id} titled={kind === "bubble-titled"} onSkip={restart} />
         )}
@@ -41,6 +39,24 @@ function ModalDemo({ render }: { render: (onDismiss: () => void) => ReactNode })
   return (
     <div className="gallery-stage gallery-modal-stage" key={run}>
       {render(() => setRun(run + 1))}
+    </div>
+  );
+}
+
+function ConfirmDemo() {
+  const [run, setRun] = useState(0);
+  return (
+    <div className="gallery-stage gallery-confirm-stage">
+      <div className="gallery-mock-page" aria-hidden="true">
+        {[0, 1, 2].map((card) => (
+          <div key={card} className="card gallery-mock-card">
+            <span className="gallery-target-line is-short" />
+            <span className="gallery-target-line" />
+            <span className="gallery-target-line" />
+          </div>
+        ))}
+      </div>
+      <ConfirmDialog key={run} inline onDismiss={() => setRun(run + 1)} />
     </div>
   );
 }
@@ -259,10 +275,10 @@ export function ComponentGallery() {
       </GallerySection>
       <GallerySection
         index={3}
-        name="Tooltip · white + logo"
-        note="Quiet branded callout with a headline, a supporting line, and a clear way to say yes or later."
+        name="Confirm · white + logo"
+        note="For confirming an action. Sits centered over a dimmed page until someone answers."
       >
-        <TipDemo kind="logo" />
+        <ConfirmDemo />
       </GallerySection>
       <RichTipSection index={4} />
       <SingleModalSection index={5} />

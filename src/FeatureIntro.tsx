@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { assets } from "./assets";
 
 export type IntroVariant =
   | "spotlight"
   | "bubble"
   | "bubble-titled"
-  | "logo"
+  | "confirm"
   | "rich"
   | "rich-stacked"
   | "modal"
@@ -21,7 +21,6 @@ export type Launch = {
   id: LaunchId;
   title: string;
   body: string;
-  gist: string;
   tag: "New" | "Updated";
   lead: string;
   rest: string;
@@ -33,7 +32,6 @@ export const LAUNCHES: Launch[] = [
     id: "comments",
     title: "See what your comments are saying",
     body: "Get the gist of every comment on your post: overall sentiment and what people keep bringing up. No more scrolling.",
-    gist: "Get the gist of every comment on your post: overall sentiment and what people keep bringing up.",
     tag: "New",
     lead: "Comment Summary",
     rest: "is here. Get the gist of every comment on your post without scrolling through them all.",
@@ -43,7 +41,6 @@ export const LAUNCHES: Launch[] = [
     id: "sentiment",
     title: "Sentiment now shows as a score",
     body: "One number for how people feel about a post, with the breakdown a click away.",
-    gist: "One number for how people feel about a post, with the breakdown a click away.",
     tag: "Updated",
     lead: "Sentiment",
     rest: "now shows as one score for how people feel, with the breakdown a click away.",
@@ -84,40 +81,51 @@ export function BubbleTip({
   );
 }
 
-export function LogoTip({
-  id = "comments",
-  onNext,
-  onSkip,
-}: {
-  id?: LaunchId;
-  onNext: (next: LaunchId | null) => void;
-  onSkip: () => void;
-}) {
-  const index = Math.max(
-    0,
-    LAUNCHES.findIndex((item) => item.id === id),
-  );
-  const item = LAUNCHES[index];
-  const next = LAUNCHES[index + 1]?.id ?? null;
+export function ConfirmDialog({ inline = false, onDismiss }: { inline?: boolean; onDismiss: () => void }) {
+  const primary = useRef<HTMLButtonElement>(null);
+  const dismiss = useRef(onDismiss);
+  dismiss.current = onDismiss;
+  useEffect(() => {
+    if (inline) return;
+    primary.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dismiss.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [inline]);
   return (
-    <div className="intro-pop is-logo" role="dialog" aria-label={item.title}>
-      <div className="intro-pop-head">
-        <div className="intro-pop-copy">
-          <img className="intro-pop-logo" src={assets.intro.plotLogo} alt="" width={28.8} height={28.8} />
-          <h3 className="intro-pop-title">{item.title}</h3>
-          <p className="intro-pop-body">{item.gist}</p>
+    <div className="intro-modal-wrap is-dim is-confirm" onClick={onDismiss}>
+      <div
+        className="intro-confirm"
+        role="alertdialog"
+        aria-modal={!inline}
+        aria-labelledby="intro-confirm-title"
+        aria-describedby="intro-confirm-body"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="intro-confirm-head">
+          <div className="intro-confirm-copy">
+            <img src={assets.intro.plotLogo} alt="" width={28.8} height={28.8} />
+            <h2 id="intro-confirm-title" className="intro-confirm-title">
+              See what your comments are saying
+            </h2>
+            <p id="intro-confirm-body" className="intro-confirm-body">
+              Get the gist of every comment on your post: overall sentiment and what people keep bringing up.
+            </p>
+          </div>
+          <button className="intro-confirm-close" type="button" aria-label="Close" onClick={onDismiss}>
+            <img src={assets.intro.closeSm} alt="" width={12} height={12} />
+          </button>
         </div>
-        <button className="intro-pop-close" type="button" aria-label="Close" onClick={onSkip}>
-          <img src={assets.intro.closeSm} alt="" width={12} height={12} />
-        </button>
-      </div>
-      <div className="intro-btns intro-pop-actions">
-        <button className="intro-btn is-primary is-sm" type="button" onClick={() => onNext(next)}>
-          Got it
-        </button>
-        <button className="intro-btn is-sm" type="button" onClick={onSkip}>
-          Not now
-        </button>
+        <div className="intro-btns intro-confirm-actions">
+          <button ref={primary} className="intro-btn is-primary is-sm" type="button" onClick={onDismiss}>
+            Got it
+          </button>
+          <button className="intro-btn is-sm" type="button" onClick={onDismiss}>
+            Not now
+          </button>
+        </div>
       </div>
     </div>
   );

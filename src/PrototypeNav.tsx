@@ -79,7 +79,7 @@ export function PrototypeNav({ view, onView, intro, onIntro, onReplay, emphasis,
             { id: "spotlight", label: "Tooltip" },
             { id: "bubble", label: "Tooltip · maroon" },
             { id: "bubble-titled", label: "Tooltip · maroon + title" },
-            { id: "logo", label: "Tooltip · white + logo" },
+            { id: "confirm", label: "Confirm · white + logo" },
             { id: "rich", label: "Tooltip · image" },
             { id: "rich-stacked", label: "Tooltip · title + image" },
             { id: "modal", label: "Modal · 1 feature" },
@@ -89,7 +89,7 @@ export function PrototypeNav({ view, onView, intro, onIntro, onReplay, emphasis,
           ]}
         />
       ) : null}
-      {showIntro && intro !== "off" ? (
+      {showIntro && intro !== "off" && intro !== "confirm" ? (
         <Segment
           label="Emphasis"
           value={emphasis}

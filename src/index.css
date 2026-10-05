@@ -1658,29 +1658,70 @@ button.flag-count:focus-visible {
   justify-content: space-between;
 }
 
-.intro-pop.is-logo {
+.intro-modal-wrap.is-confirm {
+  animation: none;
+}
+
+.intro-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 350px;
+  max-width: 100%;
+  margin: auto;
+  padding: 12px;
   border-radius: var(--radius-card);
+  background: var(--color-white);
+  box-shadow: 0 24px 64px rgba(35, 6, 3, 0.16);
+  color: var(--color-black);
+  text-align: left;
 }
 
-.intro-pop.is-logo .intro-pop-copy {
-  width: 310px;
+.intro-confirm-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
 }
 
-.intro-pop-logo {
+.intro-confirm-copy {
+  display: flex;
+  flex: 0 1 310px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.intro-confirm-copy img {
   display: block;
 }
 
-.intro-pop.is-logo .intro-pop-title {
+.intro-confirm-title {
+  max-width: 234px;
+  margin: 0;
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: normal;
   text-wrap: balance;
 }
 
-.intro-pop.is-logo .intro-pop-body {
+.intro-confirm-body {
+  margin: 0;
   color: var(--color-gray-700);
   font-size: 16px;
+  font-weight: 500;
+  line-height: normal;
   text-wrap: pretty;
 }
 
-.intro-pop-actions {
+.intro-confirm-close {
+  display: flex;
+  flex: none;
+}
+
+.intro-confirm-actions {
   align-self: flex-end;
 }
 
@@ -2603,15 +2644,6 @@ button.flag-count:focus-visible {
     max-width: 294px;
   }
 
-  .intro-pop.is-logo {
-    width: min(350px, 100%);
-  }
-
-  .intro-pop.is-logo .intro-pop-copy {
-    width: auto;
-    max-width: 310px;
-  }
-
   .intro-bubble {
     top: auto;
     right: 0;
@@ -2817,10 +2849,6 @@ button.flag-count:focus-visible {
 
 .gallery-tip-stage.is-rich {
   padding: 48px 32px;
-}
-
-.gallery-tip-stage.is-logo {
-  padding-bottom: 160px;
 }
 
 .gallery-tip-stage:is(.is-caret-right-top, .is-caret-right-bottom) {
@@ -3037,13 +3065,32 @@ button.flag-count:focus-visible {
   animation: none;
 }
 
+.gallery-confirm-stage {
+  display: grid;
+}
+
+.gallery-mock-page {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 32px;
+  min-height: 360px;
+}
+
+.gallery-mock-card {
+  align-self: start;
+}
+
+.gallery-confirm-stage .intro-modal-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  padding: 16px;
+}
+
 @media (max-width: 1100px) {
   .gallery-tip-stage:not(.is-rich) {
     padding: 240px 16px 32px;
-  }
-
-  .gallery-tip-stage.is-logo {
-    padding-top: 280px;
   }
 }
 

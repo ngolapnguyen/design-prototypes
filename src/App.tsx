@@ -3,8 +3,8 @@ import { assets } from "./assets";
 import { CommentSummary } from "./CommentSummary";
 import {
   BubbleTip,
+  ConfirmDialog,
   IntroModal,
-  LogoTip,
   PlottingModal,
   RichTip,
   SpotlightPopover,
@@ -40,7 +40,7 @@ const INTRO_VARIANTS: IntroVariant[] = [
   "spotlight",
   "bubble",
   "bubble-titled",
-  "logo",
+  "confirm",
   "rich",
   "rich-stacked",
   "modal",
@@ -60,7 +60,6 @@ const firstStage = (variant: IntroVariant): IntroStage | null =>
     : variant === "spotlight" ||
         variant === "bubble" ||
         variant === "bubble-titled" ||
-        variant === "logo" ||
         variant === "rich" ||
         variant === "rich-stacked"
       ? { step: "tooltip", id: "comments" }
@@ -71,7 +70,8 @@ export default function App() {
     localStorage.getItem(VIEW_KEY) === "prototype" ? "prototype" : "components",
   );
   const [intro, setIntro] = useState<IntroVariant>(() => {
-    const saved = localStorage.getItem(INTRO_KEY) as IntroVariant | null;
+    const stored = localStorage.getItem(INTRO_KEY);
+    const saved = (stored === "logo" ? "confirm" : stored) as IntroVariant | null;
     return saved && INTRO_VARIANTS.includes(saved) ? saved : "spotlight";
   });
   const [emphasis, setEmphasis] = useState<IntroEmphasis>(() => {
@@ -144,6 +144,7 @@ export default function App() {
       {nav}
       {tooltip && overlay ? <div className={`intro-scrim is-${emphasis}`} onClick={closeIntro} /> : null}
       {active?.step === "intro" && intro === "modal" ? <IntroModal emphasis={emphasis} onDismiss={closeIntro} /> : null}
+      {active?.step === "intro" && intro === "confirm" ? <ConfirmDialog onDismiss={closeIntro} /> : null}
       {active?.step === "intro" && (intro === "plotting" || intro === "plotting-serif") ? (
         <PlottingModal emphasis={emphasis} serif={intro === "plotting-serif"} onDismiss={closeIntro} />
       ) : null}
@@ -382,13 +383,6 @@ export default function App() {
                   <RichTip
                     id={tooltip}
                     stacked={intro === "rich-stacked"}
-                    onNext={(next) => setStage(next ? { step: "tooltip", id: next } : null)}
-                    onSkip={closeIntro}
-                  />
-                ) : null}
-                {tooltip && intro === "logo" ? (
-                  <LogoTip
-                    id={tooltip}
                     onNext={(next) => setStage(next ? { step: "tooltip", id: next } : null)}
                     onSkip={closeIntro}
                   />
