@@ -51,7 +51,7 @@ const firstStage = (variant: IntroVariant): IntroStage | null =>
 
 export default function App() {
   const [view, setView] = useState<ProtoView>(() =>
-    localStorage.getItem(VIEW_KEY) === "components" ? "components" : "prototype",
+    localStorage.getItem(VIEW_KEY) === "prototype" ? "prototype" : "components",
   );
   const [intro, setIntro] = useState<IntroVariant>(() => {
     const saved = localStorage.getItem(INTRO_KEY) as IntroVariant | null;
