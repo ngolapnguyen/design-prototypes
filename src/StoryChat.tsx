@@ -624,18 +624,31 @@ export function StoryChat({ themeId, layout, onBack }: { themeId: string; layout
               </div>
 
               <div className="story-chat-dock" hidden={chat !== null}>
-                <div className="follow-q-chips story-chat-suggest" aria-label="Suggested questions">
-                  {brief.related.map((question) => (
-                    <button
-                      key={question.text}
-                      type="button"
-                      className="follow-q-chip"
-                      onClick={() => ask(question.text)}
-                    >
-                      {question.text}
-                    </button>
-                  ))}
-                </div>
+                {layout === "bottom" ? (
+                  <div className="story-chat-try" aria-label="Suggested questions">
+                    <p>Try asking</p>
+                    <div className="story-chat-try-list">
+                      {brief.related.map((question) => (
+                        <button key={question.text} type="button" onClick={() => ask(question.text)}>
+                          {question.text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="follow-q-chips story-chat-suggest" aria-label="Suggested questions">
+                    {brief.related.map((question) => (
+                      <button
+                        key={question.text}
+                        type="button"
+                        className="follow-q-chip"
+                        onClick={() => ask(question.text)}
+                      >
+                        {question.text}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <form
                   className="story-chat-composer"
                   onSubmit={(event) => {
