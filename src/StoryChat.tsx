@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { InsightsNav } from "./ChatInsights";
+import { AssistantBubble, UserBubble } from "./chat-ui";
 import { chatAssets } from "./chat-assets";
 import { FILTER_GROUPS, FiltersMenu, Menu, SORT_OPTIONS } from "./FeedControls";
 import { sentenceHeadline, ThemeChat } from "./Newsfeed";
@@ -364,6 +365,141 @@ function StoryVideos({ theme, blockBack }: { theme: GridTheme; blockBack: { curr
   );
 }
 
+function StoryModal({
+  theme,
+  brief,
+  stats,
+  vote,
+  onVote,
+  blockBack,
+  onClose,
+}: {
+  theme: GridTheme;
+  brief: Brief;
+  stats: ReactNode;
+  vote: "up" | "down" | null;
+  onVote: (next: "up" | "down") => void;
+  blockBack: { current: boolean };
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const [thread, setThread] = useState<{ id: number; text: string }[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  useEffect(() => {
+    const scroll = scrollRef.current;
+    if (thread.length && scroll) scroll.scrollTo({ top: scroll.scrollHeight, behavior: "smooth" });
+  }, [thread.length]);
+
+  const ask = (question: string) => {
+    const text = question.trim();
+    if (!text) return;
+    setThread((current) => [...current, { id: Date.now(), text }]);
+    setDraft("");
+  };
+
+  return (
+    <div className="story-modal-backdrop" onClick={onClose}>
+      <div
+        className="story-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={brief.crumb}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="story-modal-bar">
+          <div className="story-modal-tools">
+            <span className="story-modal-brand">
+              <img src={icon("plot-logo.png")} alt="" />
+              Plot AI
+            </span>
+            <button type="button" className="story-modal-icon" aria-label="New chat">
+              <img src={icon("icon-new-chat.svg")} alt="" />
+            </button>
+            <button type="button" className="story-modal-icon" aria-label="Chat history">
+              <img src={icon("icon-messages.svg")} alt="" />
+            </button>
+          </div>
+          <p className="story-modal-title">Story: {brief.crumb}</p>
+          <div className="story-modal-tools is-end">
+            <button type="button" className="story-chat-share">
+              <img src={chatAssets.buildings} alt="" />
+              Share
+            </button>
+            <button type="button" className="story-modal-icon" aria-label="More options">
+              <img src={chatAssets.more} alt="" />
+            </button>
+            <span className="story-modal-divider" aria-hidden="true" />
+            <button type="button" className="story-modal-close" aria-label="Close" onClick={onClose}>
+              <img src={icon("icon-close.svg")} alt="" />
+            </button>
+          </div>
+        </header>
+
+        <div ref={scrollRef} className="story-modal-scroll">
+          <article className="story-modal-doc">
+            <div className="story-chat-title">
+              <h1>{sentenceHeadline(theme.title, theme.id)}</h1>
+              <Votes vote={vote} onVote={onVote} />
+            </div>
+            <div className="story-modal-sources">
+              <span>
+                Sources
+                <strong>
+                  {theme.stats.posts} <small>posts analyzed</small>
+                </strong>
+              </span>
+              <span className="story-modal-thumbs">
+                {theme.posts.slice(0, 3).map((post) => (
+                  <img key={post.src} src={post.src} alt="" />
+                ))}
+              </span>
+            </div>
+            <p className="story-chat-why">{theme.summary}</p>
+            {stats}
+            <StoryVideos theme={theme} blockBack={blockBack} />
+            {thread.map((item) => (
+              <div key={item.id} className="story-modal-turn">
+                <UserBubble text={item.text} />
+                <AssistantBubble text={theme.summary} />
+              </div>
+            ))}
+          </article>
+        </div>
+
+        <div className="story-modal-dock">
+          <form
+            className="story-modal-ask"
+            onSubmit={(event) => {
+              event.preventDefault();
+              ask(draft);
+            }}
+          >
+            <img src={chatAssets.avatarRhea} alt="" />
+            <input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Ask a follow-up"
+              aria-label="Ask a follow-up"
+            />
+            <button type="submit" aria-label="Send" disabled={!draft.trim()}>
+              <img src={chatAssets.sendPill} alt="" />
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StoryChat({ themeId, layout, onBack }: { themeId: string; layout: StoryLayout; onBack: () => void }) {
   const theme = GRID_THEMES.find((item) => item.id === themeId) ?? GRID_THEMES[0];
   const brief = BRIEFS[theme.id] ?? BRIEFS.nyx;
@@ -398,6 +534,46 @@ export function StoryChat({ themeId, layout, onBack }: { themeId: string; layout
     setChat({ id: `${Date.now()}`, question: { text, reply: theme.summary } });
     setDraft("");
   };
+
+  const stats = (
+    <div className="ps-stats">
+      <span>
+        <strong>
+          {theme.stats.posts}
+          <span aria-hidden="true">🔥</span>
+        </strong>
+        Posts
+      </span>
+      <span>
+        <strong>
+          {compact(theme.stats.views)}
+          <span aria-hidden="true">👀</span>
+        </strong>
+        View count
+      </span>
+      <span>
+        <strong>
+          {compact(theme.stats.engagement)}
+          <span aria-hidden="true">👀</span>
+        </strong>
+        Total engagement
+      </span>
+    </div>
+  );
+
+  if (layout === "modal") {
+    return (
+      <StoryModal
+        theme={theme}
+        brief={brief}
+        stats={stats}
+        vote={vote}
+        onVote={(next) => setVote(vote === next ? null : next)}
+        blockBack={blockBack}
+        onClose={onBack}
+      />
+    );
+  }
 
   return (
     <div className="chat-lab">
@@ -435,29 +611,7 @@ export function StoryChat({ themeId, layout, onBack }: { themeId: string; layout
                     <Votes vote={vote} onVote={(next) => setVote(vote === next ? null : next)} />
                   </div>
                   <p className="story-chat-why">{theme.summary}</p>
-                  <div className="ps-stats">
-                    <span>
-                      <strong>
-                        {theme.stats.posts}
-                        <span aria-hidden="true">🔥</span>
-                      </strong>
-                      Posts
-                    </span>
-                    <span>
-                      <strong>
-                        {compact(theme.stats.views)}
-                        <span aria-hidden="true">👀</span>
-                      </strong>
-                      View count
-                    </span>
-                    <span>
-                      <strong>
-                        {compact(theme.stats.engagement)}
-                        <span aria-hidden="true">👀</span>
-                      </strong>
-                      Total engagement
-                    </span>
-                  </div>
+                  {stats}
                 </article>
 
                 <StoryVideos theme={theme} blockBack={blockBack} />

@@ -1,5 +1,5 @@
 export type LabPage = "newsfeed" | "newsfeed-v2" | "decisions" | "rules" | "experiments";
-export type StoryLayout = "side" | "bottom";
+export type StoryLayout = "side" | "bottom" | "modal";
 
 type PrototypeNavProps = {
   page: LabPage;
@@ -89,6 +89,7 @@ export function PrototypeNav({
             options={[
               { id: "side", label: "Chat on side" },
               { id: "bottom", label: "Ask a follow-up" },
+              { id: "modal", label: "Modal" },
             ]}
           />
         ) : null}

@@ -26,9 +26,10 @@ export default function App() {
   const [theme, setTheme] = useState<string | null>(null);
   const [commenting, setCommenting] = useState(false);
   const [noteCount, setNoteCount] = useState(savedNoteCount);
-  const [storyLayout, setStoryLayout] = useState<StoryLayout>(() =>
-    localStorage.getItem(STORY_LAYOUT_KEY) === "bottom" ? "bottom" : "side",
-  );
+  const [storyLayout, setStoryLayout] = useState<StoryLayout>(() => {
+    const saved = localStorage.getItem(STORY_LAYOUT_KEY);
+    return saved === "bottom" || saved === "modal" ? saved : "side";
+  });
 
   const changeStoryLayout = (next: StoryLayout) => {
     localStorage.setItem(STORY_LAYOUT_KEY, next);
@@ -72,7 +73,7 @@ export default function App() {
         <Experiments />
       ) : (
         <>
-          <div hidden={theme !== null}>
+          <div hidden={theme !== null && storyLayout !== "modal"}>
             <Newsfeed
               version={page === "newsfeed-v2" ? "v2" : "v1"}
               onOpenTheme={setTheme}
