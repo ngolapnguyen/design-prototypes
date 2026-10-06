@@ -122,6 +122,14 @@
   padding: 48px 48px 40px;
 }
 
+.story-chat.is-side .story-chat-content {
+  --story-width: 100%;
+}
+
+.story-chat.is-side .story-chat-scroll {
+  padding: 32px 24px;
+}
+
 .story-chat-answer {
   width: var(--story-width);
   margin: 0 auto;
