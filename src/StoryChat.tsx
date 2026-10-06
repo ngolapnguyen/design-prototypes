@@ -447,8 +447,11 @@ function StoryModal({
         <div ref={scrollRef} className="story-modal-scroll">
           <article className="story-modal-doc">
             <div className="story-chat-title">
+              <div className="story-chat-meta">
+                <p>Last updated {theme.ago}</p>
+                <Votes vote={vote} onVote={onVote} />
+              </div>
               <h1>{sentenceHeadline(theme.title, theme.id)}</h1>
-              <Votes vote={vote} onVote={onVote} />
             </div>
             <div className="story-modal-sources">
               <span>
@@ -607,8 +610,11 @@ export function StoryChat({ themeId, layout, onBack }: { themeId: string; layout
               <div className="story-chat-scroll">
                 <article className="story-chat-answer">
                   <div className="story-chat-title">
+                    <div className="story-chat-meta">
+                      <p>Last updated {theme.ago}</p>
+                      <Votes vote={vote} onVote={(next) => setVote(vote === next ? null : next)} />
+                    </div>
                     <h1>{sentenceHeadline(theme.title, theme.id)}</h1>
-                    <Votes vote={vote} onVote={(next) => setVote(vote === next ? null : next)} />
                   </div>
                   <p className="story-chat-why">{theme.summary}</p>
                   {stats}

@@ -405,6 +405,9 @@ export function Newsfeed({
   version?: "v1" | "v2";
 }) {
   const [toast, setToast] = useState<string | null>(null);
+  const [hiddenThemes, setHiddenThemes] = useState<string[]>([]);
+  const [undoHide, setUndoHide] = useState<{ storyId: string; themeId: string } | null>(null);
+  const undoTimer = useRef<number | undefined>(undefined);
   const [menu, setMenu] = useState<"sort" | null>(null);
   const time = "Last 14 days" as (typeof TIME_OPTIONS)[number];
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>("Recency");
@@ -460,7 +463,7 @@ export function Newsfeed({
   const stories = inRange;
   const archive = [...PAST_THEMES].sort((a, b) => a.daysAgo - b.daysAgo).map(storyForPast);
   const feed = [...stories, ...archive];
-  const served = feed.slice(0, V2_THEME_LIMIT);
+  const served = feed.filter((story) => !hiddenThemes.includes(story.theme.id)).slice(0, V2_THEME_LIMIT);
   const feedLabels = V2_LABELS.filter((label) => served.some((story) => story.tag === label));
 
   const totalReviewed = pastReviewed + reviewed.length;
@@ -489,6 +492,28 @@ export function Newsfeed({
     if (next === "up") {
       ping(cleared ? "Feedback cleared" : "Thanks for your feedback. You’ll see more suggestions like this.");
     }
+  };
+
+  const hideTheme = (story: Story) => {
+    setVotes((current) => ({ ...current, [story.id]: "down" }));
+    setHiddenThemes((current) => [...current, story.theme.id]);
+    setToast(null);
+    setUndoHide({ storyId: story.id, themeId: story.theme.id });
+    window.clearTimeout(undoTimer.current);
+    undoTimer.current = window.setTimeout(() => setUndoHide(null), 5000);
+  };
+
+  const undoHideTheme = () => {
+    if (!undoHide) return;
+    const { storyId, themeId } = undoHide;
+    setHiddenThemes((current) => current.filter((item) => item !== themeId));
+    setVotes((current) => {
+      const copy = { ...current };
+      delete copy[storyId];
+      return copy;
+    });
+    window.clearTimeout(undoTimer.current);
+    setUndoHide(null);
   };
 
   const openFeedStory = (story: Story) => {
@@ -707,7 +732,7 @@ export function Newsfeed({
                       when={story.when}
                       vote={votes[story.id] ?? null}
                       onOpen={() => openFeedStory(story)}
-                      onVote={(next) => voteTheme(story.id, next)}
+                      onVote={(next) => (next === "down" ? hideTheme(story) : voteTheme(story.id, next))}
                     />
                   ))
               : [...stories, ...archive].map((story) =>
@@ -866,6 +891,14 @@ export function Newsfeed({
         />
       ) : null}
       {toast ? <p className="nf-toast">{toast}</p> : null}
+      {undoHide ? (
+        <div className="nf-toast is-undo" role="status">
+          <span>We’ve hidden that theme. Thanks for your feedback.</span>
+          <button type="button" onClick={undoHideTheme}>
+            Undo
+          </button>
+        </div>
+      ) : null}
       {version === "v1" ? <Annotations active={commenting} /> : null}
     </div>
   );

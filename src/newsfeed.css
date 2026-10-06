@@ -2432,6 +2432,32 @@
   transform: translateX(-50%);
 }
 
+.nf-toast.is-undo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 8px 8px 12px;
+}
+
+.nf-toast.is-undo button {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.nf-toast.is-undo button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .nf-pulse {
   gap: 12px;
   padding: 24px;
