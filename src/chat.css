@@ -1906,8 +1906,10 @@ button.status-line {
 .chat-insights-nav {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   width: 240px;
   flex-shrink: 0;
+  align-self: stretch;
   min-height: 0;
   background: #fcfcfc;
   border-radius: 16px 0 0 16px;

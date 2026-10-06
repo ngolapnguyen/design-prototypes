@@ -46,7 +46,7 @@ function NavRow({
   );
 }
 
-function InsightsNav() {
+export function InsightsNav() {
   return (
     <aside className="chat-insights-nav">
       <div className="chat-insights-nav-top">

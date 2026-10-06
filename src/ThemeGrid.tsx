@@ -215,16 +215,22 @@ export function ThemeFeature({
   onVote,
   onOpen,
   onOpenPost,
+  onTrack,
+  tracked = false,
   stage = "stack",
-  cta,
+  tag,
+  living,
 }: {
   theme: GridTheme;
   vote?: "up" | "down" | null;
   onVote?: (next: "up" | "down") => void;
   onOpen?: () => void;
   onOpenPost?: (index: number) => void;
+  onTrack?: () => void;
+  tracked?: boolean;
   stage?: "stack" | "single";
-  cta?: string;
+  tag?: string;
+  living?: string;
 }) {
   const count = stage === "single" ? 1 : FEATURE_POSTS;
   const posts = Array.from({ length: count }, (_, index) => theme.posts[index % theme.posts.length]);
@@ -235,6 +241,11 @@ export function ThemeFeature({
       onClick={onOpen}
     >
       <div className="tg-feature-copy">
+        {tag ? (
+          <div className="tg-feature-top">
+            <span className="tg-tag">{tag}</span>
+          </div>
+        ) : null}
         <div className="tg-feature-text">
           <h3>
             {onOpen ? (
@@ -253,6 +264,7 @@ export function ThemeFeature({
             )}
           </h3>
           <p className="tg-summary">{theme.summary}</p>
+          {living ? <p className="tg-living">{living}</p> : null}
           <div className="tg-feature-stats">
             <span>
               <strong>
@@ -277,12 +289,19 @@ export function ThemeFeature({
             </span>
           </div>
         </div>
-        <div className="tg-feature-foot" onClick={(event) => event.stopPropagation()}>
-          <Sources theme={theme} kind="posts" onOpen={onOpen} cta={cta} />
-          {onVote ? <Votes vote={vote} onVote={onVote} /> : null}
-        </div>
       </div>
       <div className="tg-feature-stage" onClick={(event) => event.stopPropagation()}>
+        {onTrack || onVote ? (
+          <div className="tg-feature-overlay">
+            {onTrack ? (
+              <button type="button" className="cc-btn" aria-pressed={tracked} onClick={onTrack}>
+                <img src={asset("newsfeed/icon-track.svg")} alt="" />
+                {tracked ? "Report created" : "Generate custom report"}
+              </button>
+            ) : null}
+            {onVote ? <Votes vote={vote} onVote={onVote} /> : null}
+          </div>
+        ) : null}
         <FocusStrip
           posts={posts}
           label={`Posts for ${theme.title}`}
@@ -347,6 +366,8 @@ export function ThemeCard({
   cta,
   kicker,
   texture,
+  tag,
+  living,
 }: {
   theme: GridTheme;
   variant: GridVariant;
@@ -365,6 +386,8 @@ export function ThemeCard({
   cta?: string;
   kicker?: string;
   texture?: string;
+  tag?: string;
+  living?: string;
 }) {
   const posts = Array.from({ length: POSTS_PER_THEME }, (_, index) => theme.posts[index % theme.posts.length]);
 
@@ -438,8 +461,10 @@ export function ThemeCard({
             </div>
           ) : null}
           {kicker && layout !== "stack" ? <p className="tg-kicker">{kicker}</p> : null}
+          {tag ? <span className="tg-tag">{tag}</span> : null}
           {title}
           <p className="tg-summary">{theme.summary}</p>
+          {living ? <p className="tg-living">{living}</p> : null}
           {sources || (layout === "split" && votes) ? (
             <div className="tg-card-foot" onClick={(event) => event.stopPropagation()}>
               {sources ? (

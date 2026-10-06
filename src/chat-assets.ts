@@ -43,4 +43,11 @@ export const chatAssets = {
   caretFigma: file("/assets/chat/icon-caret-figma.svg"),
   flash: file("/assets/chat/icon-flash.svg"),
   sendUp: file("/assets/chat/icon-send-up.svg"),
+  arrowLeft: file("/assets/chat/icon-arrow-left.svg"),
+  buildings: file("/assets/chat/icon-buildings.svg"),
+  likeLine: file("/assets/chat/icon-like-line.svg"),
+  dislikeLine: file("/assets/chat/icon-dislike-line.svg"),
+  copy: file("/assets/chat/icon-copy.svg"),
+  search: file("/assets/chat/icon-search.svg"),
+  sendPill: file("/assets/chat/icon-send-pill.svg"),
 };

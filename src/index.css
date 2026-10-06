@@ -71,6 +71,14 @@
 }
 
 @font-face {
+  font-family: "MF Ionica";
+  src: url("./fonts/MFIonicaBeta-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Good Sans";
   src:
     url("./fonts/GoodSans-Regular.woff2") format("woff2");
@@ -129,6 +137,7 @@
   --font-body: "TT Commons Pro", sans-serif;
   --font-display: "Good Sans", sans-serif;
   --font-magazine: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-ionica: "MF Ionica", Georgia, serif;
   --radius-card: 16px;
   --radius-pill: 100px;
 }
@@ -309,6 +318,188 @@ img {
   background: var(--color-white);
   color: var(--color-black);
   box-shadow: 0 1px 1px rgba(35, 6, 3, 0.06);
+}
+
+.proto-comment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: var(--color-gray-200);
+  color: var(--color-gray-800);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.proto-comment svg {
+  display: block;
+}
+
+.proto-comment.is-on,
+.proto-comment.is-on:hover {
+  background: #1d1b20;
+  color: var(--color-white);
+}
+
+.proto-comment-hint {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-gray-700);
+}
+
+.anno-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.nf {
+  position: relative;
+}
+
+.nf.is-commenting .anno-layer {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.anno-spot {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+}
+
+.nf.is-commenting .anno-spot {
+  display: block;
+}
+
+.anno-spot:has(.is-open) {
+  z-index: 2;
+}
+
+.anno-pin,
+.anno-pop {
+  pointer-events: auto;
+}
+
+.anno-pin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  transform: translate(-2px, calc(-100% + 2px));
+  border-radius: 13px 13px 13px 3px;
+  box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(35, 6, 3, 0.18);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.anno-pin.is-pro {
+  background: #e0e4ca;
+  color: #4a4e32;
+}
+
+.anno-pin.is-con {
+  background: #f4d4ce;
+  color: #6e332c;
+}
+
+.anno-pin.is-note {
+  background: #1d1b20;
+  color: var(--color-white);
+}
+
+.anno-pin.is-open {
+  outline: 2px solid #1d1b20;
+  outline-offset: 2px;
+}
+
+.anno-pop {
+  position: absolute;
+  top: -4px;
+  left: 32px;
+  width: 260px;
+  padding: 10px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: 0 8px 24px rgba(35, 6, 3, 0.12);
+  cursor: default;
+}
+
+.anno-spot.is-flip .anno-pop {
+  left: auto;
+  right: 32px;
+}
+
+.anno-spot.is-up .anno-pop {
+  top: auto;
+  bottom: 8px;
+}
+
+.anno-kinds {
+  display: flex;
+  gap: 4px;
+}
+
+.anno-kinds button {
+  padding: 4px 8px;
+  border-radius: 100px;
+  background: var(--color-gray-200);
+  color: var(--color-gray-800);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.anno-kinds button.is-on.is-pro {
+  background: #e0e4ca;
+  color: #4a4e32;
+}
+
+.anno-kinds button.is-on.is-con {
+  background: #f4d4ce;
+  color: #6e332c;
+}
+
+.anno-kinds button.is-on.is-note {
+  background: #1d1b20;
+  color: var(--color-white);
+}
+
+.anno-pop textarea {
+  width: 100%;
+  min-height: 96px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  resize: vertical;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-black);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  cursor: text;
+}
+
+.anno-pop-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.anno-remove {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-gray-700);
 }
 
 .app {

@@ -3,9 +3,10 @@ import { AssistantBubble, Composer, UserBubble } from "./chat-ui";
 import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import type { PostId } from "./posts";
 import { CAPTION } from "./FocusCarousel";
-import { DEFAULT_FILTERS, FiltersMenu, Menu, SORT_OPTIONS, TIME_OPTIONS } from "./FeedControls";
-import { GRID_THEMES, ThemeCard, ThemeFeature, type GridTheme, type GridVariant } from "./ThemeGrid";
+import { Menu, SORT_OPTIONS, TIME_OPTIONS } from "./FeedControls";
+import { GRID_THEMES, ThemeFeature, type GridTheme } from "./ThemeGrid";
 import { PAST_THEMES, type PastTheme } from "./PastThemes";
+import { Annotations } from "./Annotations";
 import "./newsfeed.css";
 
 const file = (path: string) => `${import.meta.env.BASE_URL}assets/newsfeed/${path}`;
@@ -17,6 +18,34 @@ const STORY_TEXTURES = {
   "--tex-2": texture("grain-lime.jpg"),
   "--tex-3": texture("grain-pink.jpg"),
 } as CSSProperties;
+
+const STORY_TAGS: Record<string, string> = {
+  nyx: "Unique Use",
+  vb: "Event",
+  anne: "Brand Safety",
+  lulu: "Launch",
+};
+
+const STORY_VELOCITY: Record<string, string> = {
+  nyx: "+40% vs last week",
+  vb: "+18% vs last week",
+  anne: "+9% vs last week",
+  lulu: "+27% vs last week",
+};
+
+const ARCHIVE_TAGS: [RegExp, string][] = [
+  [/dupe/i, "Dupe"],
+  [/\b(vs\.?|tests?|ranked|face-offs?)\b/i, "Comparison"],
+  [/hamilton|hathaway|lululemon|portofino/i, "Brand Mention"],
+  [/wedding|festival|bridal|school|airport|pool/i, "Event"],
+  [/hacks?|fix|recovery|routines?|how|under ten/i, "Tutorial"],
+];
+
+const ARCHIVE_FALLBACK_TAGS = ["Trend", "Unique Use", "Tutorial"];
+
+function archiveTag(title: string, index: number) {
+  return ARCHIVE_TAGS.find(([pattern]) => pattern.test(title))?.[1] ?? ARCHIVE_FALLBACK_TAGS[index % 3];
+}
 
 const nf = {
   menu: file("icon-menu.svg"),
@@ -63,6 +92,11 @@ type Story = {
   engagement: number;
   about: ThemeAbout;
   theme: GridTheme;
+  living?: string;
+  when?: string;
+  tag?: string;
+  velocity?: string;
+  openId?: string;
 };
 
 type ThemeAbout = {
@@ -142,8 +176,20 @@ const STORIES: Story[] = ROUND_OFFSETS.flatMap((offset, round) =>
   }),
 );
 
-const DEFAULT_THEMES = 4;
 const FEED_DAYS = 14;
+const FEED_NOW = new Date(2026, 9, 5);
+const ARCHIVE_NOW = new Date(2026, 8, 29);
+
+const monthDay = (date: Date) =>
+  date.toLocaleDateString("en-US", { month: "short", day: "numeric" }).replace(/^Sep\b/, "Sept");
+
+function dateRange(now: Date, endHoursAgo: number, startHoursAgo: number) {
+  const end = new Date(now);
+  end.setDate(end.getDate() - Math.floor(endHoursAgo / 24));
+  const start = new Date(now);
+  start.setDate(start.getDate() - Math.floor(startHoursAgo / 24));
+  return `${monthDay(start)} - ${monthDay(end)}`;
+}
 
 const RANGE_DAYS: Record<(typeof TIME_OPTIONS)[number], number> = {
   "All time": Infinity,
@@ -158,28 +204,52 @@ const RANGE_DAYS: Record<(typeof TIME_OPTIONS)[number], number> = {
   "Custom range": FEED_DAYS,
 };
 
-type FeedSlot = { kind: "feature" | "card"; story: Story } | { kind: "feedback" };
-
-function arrangeFeed(stories: Story[], withFeedback: boolean): FeedSlot[] {
-  const [lead, ...rest] = stories;
-  const slots: FeedSlot[] = lead ? [{ kind: "feature", story: lead }] : [];
-  rest.forEach((story, index) => {
-    slots.push({ kind: "card", story });
-    if (withFeedback && index === 2) slots.push({ kind: "feedback" });
+function foldStories(stories: Story[]): Story[] {
+  const groups = new Map<string, Story[]>();
+  stories.forEach((story) => {
+    const list = groups.get(story.theme.id) ?? [];
+    list.push(story);
+    groups.set(story.theme.id, list);
   });
-  return slots;
+  return [...groups.values()].map((group) => {
+    const sorted = [...group].sort((a, b) => a.hoursAgo - b.hoursAgo);
+    const newest = sorted[0];
+    const oldest = sorted[sorted.length - 1];
+    const days = Math.max(1, Math.round(oldest.hoursAgo / 24));
+    const velocity = STORY_VELOCITY[newest.theme.id] ?? "+40% vs last week";
+    const living = [`Ongoing ${days} days`, velocity, group.length > 1 ? "Now relevant again" : ""]
+      .filter(Boolean)
+      .join(" · ");
+    return {
+      ...newest,
+      living,
+      when: dateRange(FEED_NOW, newest.hoursAgo, oldest.hoursAgo),
+      tag: STORY_TAGS[newest.theme.id],
+      velocity,
+    };
+  });
 }
 
-const FEEDBACK_TOPICS = [
-  "Product launches",
-  "Creator tutorials",
-  "Celebrity moments",
-  "Dupes and swaps",
-  "Competitor moves",
-  "Complaints",
-];
-
-const BACKGROUNDS: Record<string, GridVariant> = { nyx: "photo" };
+function storyForPast(item: PastTheme, index: number): Story {
+  const base = STORIES.find((story) => story.theme.id === item.openId) ?? STORIES[0];
+  return {
+    ...base,
+    id: item.id,
+    ago: item.date,
+    hoursAgo: item.daysAgo * 24,
+    heading: item.theme.title,
+    posts: item.theme.stats.posts,
+    views: item.theme.stats.views,
+    engagement: item.theme.stats.engagement,
+    about: { ...base.about, product: item.theme.title },
+    theme: item.theme,
+    living: `Ongoing ${item.daysAgo} days`,
+    when: dateRange(ARCHIVE_NOW, item.daysAgo * 24, item.daysAgo * 48),
+    tag: archiveTag(item.theme.title, index),
+    velocity: `+${Math.max(4, Math.round(item.theme.stats.posts / 3))}% vs last week`,
+    openId: item.openId,
+  };
+}
 
 const WATCHLIST = [
   {
@@ -215,25 +285,90 @@ const POST_TITLES: Record<PostId, string> = {
   "2": "Lewis Hamilton’s golf wager with Min Woo Lee",
 };
 
-export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => void }) {
+const SENTENCE_HEADLINES: Record<string, string> = {
+  nyx: "NYX Brow Glue is going viral for ‘Crazy Lift’ and Long-Lasting Hold",
+  vb: "Bridal lip combos are being built around Portofino ’97",
+  anne: "Anne Hathaway’s red carpet looks are driving brown shadow tutorials",
+  lulu: "Lululemon’s summer series is turning Pilates into a mood",
+};
+
+const TITLE_VERB =
+  /\b(is|are|gets|get|keep|keeps|go|goes|swap|swaps|returns|return|drives|drive|turns|turn|beat|beats|move|moves|sparks|spark|adds|add|ranked)\b/i;
+
+function sentenceHeadline(title: string, themeId: string) {
+  const written = SENTENCE_HEADLINES[themeId];
+  if (written) return written;
+  if (title.includes(": ")) {
+    const [lead, rest] = title.split(": ");
+    return `${lead} is going viral for ${rest}`;
+  }
+  if (TITLE_VERB.test(title)) return title;
+  return `${title} is going viral`;
+}
+
+function FeedCardV2({
+  story,
+  onOpen,
+}: {
+  story: Story;
+  onOpen: () => void;
+}) {
+  const post = story.theme.posts[0];
+  const { tag, velocity } = story;
+  const meta = [velocity ? `Up ${velocity}` : "", story.when].filter(Boolean).join(" · ");
+  return (
+    <article className="nf2-card" onClick={onOpen}>
+      <div className="nf2-hero">
+        <div className="nf2-polaroid">
+          <img src={post.src} alt="" />
+          <p className="nf2-handle">{post.handle}</p>
+          <p className="nf2-caption">{CAPTION}</p>
+        </div>
+      </div>
+      <div className="nf2-body">
+        <div className="nf2-meta">
+          {tag ? <span className="tg-tag">{tag}</span> : null}
+          <p className="nf2-date">{meta}</p>
+        </div>
+        <h3>
+          <button
+            type="button"
+            className="tg-open"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpen();
+            }}
+          >
+            {sentenceHeadline(story.theme.title, story.theme.id)}
+          </button>
+        </h3>
+      </div>
+    </article>
+  );
+}
+
+export function Newsfeed({
+  onOpenTheme,
+  commenting = false,
+  version = "v1",
+}: {
+  onOpenTheme?: (themeId: string) => void;
+  commenting?: boolean;
+  version?: "v1" | "v2";
+}) {
   const [toast, setToast] = useState<string | null>(null);
-  const [menu, setMenu] = useState<"time" | "sort" | "filters" | null>(null);
-  const [filters, setFilters] = useState<string[]>(DEFAULT_FILTERS);
-  const [time, setTime] = useState<(typeof TIME_OPTIONS)[number]>("Last 14 days");
+  const [menu, setMenu] = useState<"sort" | null>(null);
+  const time = "Last 14 days" as (typeof TIME_OPTIONS)[number];
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>("Recency");
-  const [showAll, setShowAll] = useState(false);
   const [tracked, setTracked] = useState<string[]>([]);
   const [reviewed, setReviewed] = useState<string[]>([]);
   const [pastReviewed, setPastReviewed] = useState(0);
   const [savedPicks, setSavedPicks] = useState<string[]>(["pick-1", "pick-4"]);
-  const [savedOpen, setSavedOpen] = useState(false);
-  const savedRef = useRef<HTMLLIElement>(null);
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
   const [hidden, setHidden] = useState<string[]>([]);
   const [side, setSide] = useState<SideContext | null>(null);
   const [openPost, setOpenPost] = useState<OpenPost | null>(null);
   const [openTheme, setOpenTheme] = useState<Story | null>(null);
-  const [feedback, setFeedback] = useState<"open" | "done" | "dismissed">("open");
   const barRef = useRef<HTMLDivElement>(null);
 
   const ping = (message: string) => {
@@ -266,13 +401,15 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
   });
   const visible = ordered.filter((story) => !hidden.includes(story.id));
   const days = RANGE_DAYS[time];
-  const inRange = visible.filter((story) => story.hoursAgo <= days * 24);
-  const olderInRange = PAST_THEMES.filter((item) => item.daysAgo < days);
-  const limit = showAll ? Infinity : DEFAULT_THEMES;
-  const stories = inRange.slice(0, limit);
-  const older = olderInRange.slice(0, Math.max(0, limit - inRange.length));
-  const olderWeeks = [...new Set(older.map((item) => item.week))];
-  const hasMore = stories.length + older.length < inRange.length + olderInRange.length;
+  const inRange = foldStories(visible.filter((story) => story.hoursAgo <= days * 24)).sort((a, b) => {
+    if (sort === "Views") return b.views - a.views;
+    if (sort === "Engagement rate") return b.engagement / b.views - a.engagement / a.views;
+    if (["Likes", "Comments", "Total engagement", "Shares"].includes(sort)) return b.engagement - a.engagement;
+    if (sort === "Follower count") return b.posts - a.posts;
+    return a.hoursAgo - b.hoursAgo;
+  });
+  const stories = inRange;
+  const archive = [...PAST_THEMES].sort((a, b) => a.daysAgo - b.daysAgo).map(storyForPast);
 
   const totalReviewed = pastReviewed + reviewed.length;
   const streak = totalReviewed ? 1 : 0;
@@ -281,10 +418,6 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
   const askTheme = (story: Story) => setSide({ kind: "theme", story });
 
   const openStory = (story: Story) => (onOpenTheme ? onOpenTheme(story.theme.id) : setOpenTheme(story));
-
-  const openPast = (item: PastTheme) => {
-    if (item.openId) onOpenTheme?.(item.openId);
-  };
 
   const openThemePost = (story: Story, index: number) => {
     const postId: PostId = index % 2 === 0 ? "1" : "2";
@@ -304,6 +437,14 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
     if (next === "up") {
       ping(cleared ? "Feedback cleared" : "Thanks for your feedback. You’ll see more suggestions like this.");
     }
+  };
+
+  const openFeedStory = (story: Story) => {
+    if (story.id.startsWith("past-")) {
+      if (story.openId) onOpenTheme?.(story.openId);
+      return;
+    }
+    openStory(story);
   };
 
   const trackTheme = (story: Story) => {
@@ -333,7 +474,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
   };
 
   return (
-    <div className={side ? "nf has-side" : "nf"}>
+    <div className={["nf", side ? "has-side" : "", commenting ? "is-commenting" : ""].filter(Boolean).join(" ")}>
       <PlotTopBar crumbs={[{ label: "Home" }]} onBack={() => ping("Back")} onAction={ping} />
 
       <main className="nf-main">
@@ -398,11 +539,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                       ping("Save a pick with the bookmark on its corner");
                       return;
                     }
-                    setSavedOpen(true);
-                    savedRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "center",
-                    });
+                    ping(`${savedPicks.length} saved ${savedPicks.length === 1 ? "post" : "posts"}`);
                   }}
                 >
                   {`Saved for later · ${savedPicks.length}`}
@@ -439,18 +576,6 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
             <div className="nf-controls" ref={barRef}>
               <button
                 type="button"
-                className={menu === "time" ? "nf-control is-open" : "nf-control"}
-                aria-expanded={menu === "time"}
-                onClick={() => setMenu(menu === "time" ? null : "time")}
-              >
-                <span className="nf-control-icon">
-                  <img src={nf.calendar} alt="" width={16} height={16} />
-                </span>
-                {time}
-                <img className="nf-caret" src={nf.caret} alt="" width={16} height={16} />
-              </button>
-              <button
-                type="button"
                 className={menu === "sort" ? "nf-control is-open" : "nf-control"}
                 aria-expanded={menu === "sort"}
                 onClick={() => setMenu(menu === "sort" ? null : "sort")}
@@ -463,38 +588,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                 </span>
                 <img className="nf-caret" src={nf.caret} alt="" width={16} height={16} />
               </button>
-              <button
-                type="button"
-                className={menu === "filters" ? "nf-control is-open" : "nf-control"}
-                aria-expanded={menu === "filters"}
-                onClick={() => setMenu(menu === "filters" ? null : "filters")}
-              >
-                <span className="nf-control-icon">
-                  <img src={nf.filter} alt="" width={16} height={16} />
-                </span>
-                Theme filters
-                {filters.length ? <span className="nf-control-count">{filters.length}</span> : null}
-                <img className="nf-caret" src={nf.caret} alt="" width={16} height={16} />
-              </button>
 
-              {menu === "time" ? (
-                <Menu
-                  label="Timeframe"
-                  className="is-time"
-                  variant="radio"
-                  options={TIME_OPTIONS}
-                  value={time}
-                  onPick={(value) => {
-                    if (value === "Custom range") {
-                      ping("Custom range picker coming soon");
-                      return;
-                    }
-                    setTime(value);
-                    setShowAll(RANGE_DAYS[value] > FEED_DAYS);
-                    setMenu(null);
-                  }}
-                />
-              ) : null}
               {menu === "sort" ? (
                 <Menu
                   label="Sort"
@@ -508,106 +602,52 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
                   }}
                 />
               ) : null}
-              {menu === "filters" ? <FiltersMenu selected={filters} onChange={setFilters} /> : null}
             </div>
           </div>
 
-          <div className="nf-stories tg-grid" style={STORY_TEXTURES}>
-            {arrangeFeed(stories, feedback !== "dismissed").map((slot, index) => {
-              if (slot.kind === "feedback") {
-                return (
-                  <FeedbackCard
-                    key="feedback"
-                    done={feedback === "done"}
-                    onSave={() => setFeedback("done")}
-                    onSkip={() => setFeedback("dismissed")}
+          <div className={version === "v2" ? "nf-stories is-v2" : "nf-stories"} style={STORY_TEXTURES}>
+            {version === "v2"
+              ? [...stories, ...archive].map((story) => (
+                  <FeedCardV2
+                    key={story.id}
+                    story={story}
+                    onOpen={() => openFeedStory(story)}
                   />
-                );
-              }
-              const { story } = slot;
-              return (
-                <Fragment key={story.id}>
-                  {votes[story.id] === "down" ? (
-                    <LessLikeThis
-                      wide={slot.kind === "feature"}
-                      story={story}
-                      onSave={() => {
-                        setHidden((current) => [...current, story.id]);
-                        ping("Thanks for your feedback. We’ll update your preferences.");
-                      }}
-                      onUndo={() =>
-                        setVotes((current) => {
-                          const copy = { ...current };
-                          delete copy[story.id];
-                          return copy;
-                        })
-                      }
-                    />
-                  ) : slot.kind === "feature" ? (
-                    <ThemeFeature
-                      theme={story.theme}
-                      stage="single"
-                      cta="View details"
-                      vote={votes[story.id] ?? null}
-                      onOpen={() => openStory(story)}
-                      onVote={(next) => voteTheme(story.id, next)}
-                      onOpenPost={(post) => openThemePost(story, post)}
-                    />
-                  ) : (
-                    <ThemeCard
-                      theme={story.theme}
-                      variant={BACKGROUNDS[story.theme.id] ?? "gray"}
-                      seed={index + 3}
-                      layout="split"
-                      sources="posts"
-                      cta="View details"
-                      tracked={tracked.includes(story.id)}
-                      vote={votes[story.id] ?? null}
-                      onOpen={() => openStory(story)}
-                      onAsk={() => askTheme(story)}
-                      onVote={(next) => voteTheme(story.id, next)}
-                      onTrack={() => trackTheme(story)}
-                    />
-                  )}
-                </Fragment>
-              );
-            })}
-            {olderWeeks.map((week) => {
-              const items = older.filter((item) => item.week === week);
-              return (
-                <Fragment key={week}>
-                  <h3 className="nf-week">
-                    {week}
-                    <span>
-                      {items.length} {items.length === 1 ? "theme" : "themes"}
-                    </span>
-                  </h3>
-                  {items.map((item, index) => (
-                    <ThemeCard
-                      key={item.id}
-                      theme={item.theme}
-                      variant="gray"
-                      seed={index + 3}
-                      layout="split"
-                      sources="posts"
-                      cta="View details"
-                      kicker={`From ${item.date}${item.merged ? ` · Combined from ${item.merged} themes` : ""}`}
-                      vote={votes[item.id] ?? null}
-                      onOpen={() => openPast(item)}
-                      onVote={(next) => voteTheme(item.id, next)}
-                    />
-                  ))}
-                </Fragment>
-              );
-            })}
+                ))
+              : [...stories, ...archive].map((story) =>
+              votes[story.id] === "down" ? (
+                <LessLikeThis
+                  key={story.id}
+                  story={story}
+                  onSave={() => {
+                    setHidden((current) => [...current, story.id]);
+                    ping("Thanks for your feedback. We’ll update your preferences.");
+                  }}
+                  onUndo={() =>
+                    setVotes((current) => {
+                      const copy = { ...current };
+                      delete copy[story.id];
+                      return copy;
+                    })
+                  }
+                />
+              ) : (
+                <ThemeFeature
+                  key={story.id}
+                  theme={story.theme}
+                  stage="single"
+                  tag={STORY_TAGS[story.theme.id]}
+                  living={story.living}
+                  tracked={tracked.includes(story.id)}
+                  vote={votes[story.id] ?? null}
+                  onOpen={() => openFeedStory(story)}
+                  onTrack={() => trackTheme(story)}
+                  onVote={(next) => voteTheme(story.id, next)}
+                  onOpenPost={(post) => openThemePost(story, post)}
+                />
+              ),
+            )}
           </div>
-
-          {hasMore ? (
-            <button type="button" className="nf-btn is-soft nf-more" onClick={() => setShowAll(true)}>
-              <img src={nf.chevronDown} alt="" width={16} height={16} />
-              Show all themes
-            </button>
-          ) : null}
         </section>
 
         <section className="nf-section" aria-labelledby="nf-watch-title">
@@ -615,74 +655,6 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
             Your Watchlist
           </h2>
           <ul className="nf-watch">
-            {savedPicks.length ? (
-              <li ref={savedRef} className={savedOpen ? "nf-watch-saved is-open" : "nf-watch-saved"}>
-                <div className="nf-watch-saved-row">
-                  <button
-                    type="button"
-                    className="nf-watch-open"
-                    aria-expanded={savedOpen}
-                    onClick={() => setSavedOpen((value) => !value)}
-                  >
-                    <img src={nf.saved} alt="" width={24} height={24} />
-                    <span className="nf-watch-copy">
-                      <span className="nf-watch-kind">Saved posts</span>
-                      <span className="nf-watch-title">From Daily Picks</span>
-                    </span>
-                  </button>
-                  <span className="nf-saved-peek" aria-hidden="true">
-                    {savedPicks.slice(0, 3).map((id) => (
-                      <img key={id} src={nf.pick} alt="" />
-                    ))}
-                  </span>
-                  <span className="nf-watch-date">
-                    {savedPicks.length} {savedPicks.length === 1 ? "post" : "posts"}
-                  </span>
-                  <button
-                    type="button"
-                    className="nf-icon-btn nf-saved-toggle"
-                    aria-label={savedOpen ? "Hide saved posts" : "Show saved posts"}
-                    onClick={() => setSavedOpen((value) => !value)}
-                  >
-                    <img src={nf.caret} alt="" width={16} height={16} />
-                  </button>
-                </div>
-                {savedOpen ? (
-                  <div className="nf-saved-posts">
-                    {savedPicks.map((id) => (
-                      <div key={id} className="nf-saved-post">
-                        <button
-                          type="button"
-                          className="nf-saved-open"
-                          aria-label="Open saved post"
-                          onClick={() => {
-                            const postId = pickPost(id);
-                            setOpenPost({
-                              postId,
-                              title: POST_TITLES[postId],
-                              source: "Saved post",
-                            });
-                          }}
-                        >
-                          <img src={nf.pick} alt="" />
-                        </button>
-                        <button
-                          type="button"
-                          className="nf-pick-save"
-                          aria-label="Remove from saved posts"
-                          onClick={() => {
-                            setSavedPicks((current) => current.filter((item) => item !== id));
-                            ping("Removed from saved posts");
-                          }}
-                        >
-                          <img src={nf.savedFilled} alt="" width={14} height={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </li>
-            ) : null}
             {STORIES.filter((story) => tracked.includes(story.id)).map((story) => (
               <li key={`tracked-${story.id}`}>
                 <button type="button" className="nf-watch-open" onClick={() => ping(`Open ${story.heading}`)}>
@@ -796,6 +768,7 @@ export function Newsfeed({ onOpenTheme }: { onOpenTheme?: (themeId: string) => v
         />
       ) : null}
       {toast ? <p className="nf-toast">{toast}</p> : null}
+      {version === "v1" ? <Annotations active={commenting} /> : null}
     </div>
   );
 }
@@ -1945,55 +1918,6 @@ function LessQuestion({ title, children }: { title: string; children: ReactNode 
       <p>{title}</p>
       <div className="nf-midcard-pills">{children}</div>
     </div>
-  );
-}
-
-function CheckMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M3.5 8.5l3 3 6-7" stroke="#230603" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function FeedbackCard({ done, onSave, onSkip }: { done: boolean; onSave: () => void; onSkip: () => void }) {
-  const [picked, setPicked] = useState<string[]>([]);
-  const toggle = (topic: string) =>
-    setPicked((current) => (current.includes(topic) ? current.filter((item) => item !== topic) : [...current, topic]));
-
-  if (done) {
-    return (
-      <aside className="tg-card nf-pulse is-done" aria-live="polite">
-        <span className="nf-pulse-check" aria-hidden="true">
-          <CheckMark />
-        </span>
-        <h3>Thanks, we’ll tune your feed.</h3>
-        <p className="tg-summary">You’ll see more {picked.join(", ").toLowerCase()} in Feed Stories.</p>
-      </aside>
-    );
-  }
-
-  return (
-    <aside className="tg-card nf-pulse" aria-label="Feed feedback">
-      <p className="tg-kicker">Quick check</p>
-      <h3>What should we surface more of?</h3>
-      <p className="tg-summary">Pick a few and we’ll shape your Feed Stories around them.</p>
-      <div className="nf-pulse-pills">
-        {FEEDBACK_TOPICS.map((topic) => (
-          <Pill key={topic} quiet on={picked.includes(topic)} onClick={() => toggle(topic)}>
-            {topic}
-          </Pill>
-        ))}
-      </div>
-      <div className="nf-pulse-foot">
-        <button type="button" className="nf-less-undo" onClick={onSkip}>
-          Not now
-        </button>
-        <button type="button" className="nf-midcard-submit" disabled={!picked.length} onClick={onSave}>
-          Save
-        </button>
-      </div>
-    </aside>
   );
 }
 

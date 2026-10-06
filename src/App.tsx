@@ -1,24 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DesignDecisions } from "./DesignDecisions";
 import { Experiments } from "./Experiments";
 import { ThemeCardSpecimen } from "./Homepage";
 import { Newsfeed } from "./Newsfeed";
-import { PageStyle } from "./PageStyle";
 import { PrototypeNav, type LabPage } from "./PrototypeNav";
+import { StoryChat } from "./StoryChat";
 import { Rules } from "./Rules";
+
+const NOTES_KEY = "homepage-annotations";
+
+function savedNoteCount() {
+  try {
+    const saved = localStorage.getItem(NOTES_KEY);
+    if (!saved) return 0;
+    const parsed = JSON.parse(saved) as { text?: string }[];
+    return Array.isArray(parsed) ? parsed.filter((item) => item?.text?.trim()).length : 0;
+  } catch {
+    return 0;
+  }
+}
 
 export default function App() {
   const [page, setPage] = useState<LabPage>("newsfeed");
   const [theme, setTheme] = useState<string | null>(null);
+  const [commenting, setCommenting] = useState(false);
+  const [noteCount, setNoteCount] = useState(savedNoteCount);
 
   const changePage = (next: LabPage) => {
     setTheme(null);
     setPage(next);
   };
 
+  useEffect(() => {
+    const sync = () => setNoteCount(savedNoteCount());
+    window.addEventListener("storage", sync);
+    window.addEventListener("homepage-annotations", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("homepage-annotations", sync);
+    };
+  }, []);
+
   return (
     <>
-      <PrototypeNav page={page} onPage={changePage} />
+      <PrototypeNav
+        page={page}
+        onPage={changePage}
+        commenting={commenting}
+        noteCount={noteCount}
+        onCommenting={setCommenting}
+      />
       {page === "decisions" ? (
         <>
           <ThemeCardSpecimen />
@@ -31,9 +62,15 @@ export default function App() {
       ) : (
         <>
           <div hidden={theme !== null}>
-            <Newsfeed onOpenTheme={setTheme} />
+            <Newsfeed
+              version={page === "newsfeed-v2" ? "v2" : "v1"}
+              onOpenTheme={setTheme}
+              commenting={commenting}
+            />
           </div>
-          {theme ? <PageStyle key={theme} initialThemeId={theme} onBack={() => setTheme(null)} /> : null}
+          {theme ? (
+            <StoryChat key={theme} themeId={theme} onBack={() => setTheme(null)} onOpenTheme={setTheme} />
+          ) : null}
         </>
       )}
     </>
