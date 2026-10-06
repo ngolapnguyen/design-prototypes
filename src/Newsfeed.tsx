@@ -403,7 +403,7 @@ export function Newsfeed({
   const [savedPicks, setSavedPicks] = useState<string[]>(["pick-1", "pick-4"]);
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
   const [hidden, setHidden] = useState<string[]>([]);
-  const [label, setLabel] = useState<string | null>(null);
+  const [labels, setLabels] = useState<string[]>([]);
   const [side, setSide] = useState<SideContext | null>(null);
   const [openPost, setOpenPost] = useState<OpenPost | null>(null);
   const [openTheme, setOpenTheme] = useState<Story | null>(null);
@@ -647,15 +647,27 @@ export function Newsfeed({
 
           {version === "v2" ? (
             <div className="nf2-filters" role="group" aria-label="Filter by label">
-              {[null, ...feedLabels].map((option) => (
+              <button
+                type="button"
+                className="nf2-filter"
+                aria-pressed={labels.length === 0}
+                onClick={() => setLabels([])}
+              >
+                All
+              </button>
+              {feedLabels.map((option) => (
                 <button
-                  key={option ?? "all"}
+                  key={option}
                   type="button"
                   className="nf2-filter"
-                  aria-pressed={label === option}
-                  onClick={() => setLabel(option)}
+                  aria-pressed={labels.includes(option)}
+                  onClick={() =>
+                    setLabels((current) =>
+                      current.includes(option) ? current.filter((item) => item !== option) : [...current, option],
+                    )
+                  }
                 >
-                  {option ?? "All"}
+                  {option}
                 </button>
               ))}
             </div>
@@ -664,109 +676,111 @@ export function Newsfeed({
           <div className={version === "v2" ? "nf-stories is-v2" : "nf-stories"} style={STORY_TEXTURES}>
             {version === "v2"
               ? feed
-                  .filter((story) => label === null || story.tag === label)
+                  .filter((story) => labels.length === 0 || (story.tag !== undefined && labels.includes(story.tag)))
                   .slice(0, V2_THEME_LIMIT)
                   .map((story) => (
-                  <FeedCardV2
-                    key={story.id}
-                    theme={story.theme}
-                    tag={story.tag}
-                    velocity={story.velocity}
-                    when={story.when}
-                    vote={votes[story.id] ?? null}
-                    onOpen={() => openFeedStory(story)}
-                    onVote={(next) => voteTheme(story.id, next)}
-                  />
-                ))
+                    <FeedCardV2
+                      key={story.id}
+                      theme={story.theme}
+                      tag={story.tag}
+                      velocity={story.velocity}
+                      when={story.when}
+                      vote={votes[story.id] ?? null}
+                      onOpen={() => openFeedStory(story)}
+                      onVote={(next) => voteTheme(story.id, next)}
+                    />
+                  ))
               : [...stories, ...archive].map((story) =>
-              votes[story.id] === "down" ? (
-                <LessLikeThis
-                  key={story.id}
-                  story={story}
-                  onSave={() => {
-                    setHidden((current) => [...current, story.id]);
-                    ping("Thanks for your feedback. We’ll update your preferences.");
-                  }}
-                  onUndo={() =>
-                    setVotes((current) => {
-                      const copy = { ...current };
-                      delete copy[story.id];
-                      return copy;
-                    })
-                  }
-                />
-              ) : (
-                <ThemeFeature
-                  key={story.id}
-                  theme={story.theme}
-                  stage="single"
-                  tag={STORY_TAGS[story.theme.id]}
-                  living={story.living}
-                  tracked={tracked.includes(story.id)}
-                  vote={votes[story.id] ?? null}
-                  onOpen={() => openFeedStory(story)}
-                  onTrack={() => trackTheme(story)}
-                  onVote={(next) => voteTheme(story.id, next)}
-                  onOpenPost={(post) => openThemePost(story, post)}
-                />
-              ),
-            )}
+                  votes[story.id] === "down" ? (
+                    <LessLikeThis
+                      key={story.id}
+                      story={story}
+                      onSave={() => {
+                        setHidden((current) => [...current, story.id]);
+                        ping("Thanks for your feedback. We’ll update your preferences.");
+                      }}
+                      onUndo={() =>
+                        setVotes((current) => {
+                          const copy = { ...current };
+                          delete copy[story.id];
+                          return copy;
+                        })
+                      }
+                    />
+                  ) : (
+                    <ThemeFeature
+                      key={story.id}
+                      theme={story.theme}
+                      stage="single"
+                      tag={STORY_TAGS[story.theme.id]}
+                      living={story.living}
+                      tracked={tracked.includes(story.id)}
+                      vote={votes[story.id] ?? null}
+                      onOpen={() => openFeedStory(story)}
+                      onTrack={() => trackTheme(story)}
+                      onVote={(next) => voteTheme(story.id, next)}
+                      onOpenPost={(post) => openThemePost(story, post)}
+                    />
+                  ),
+                )}
           </div>
         </section>
 
-        <section className="nf-section" aria-labelledby="nf-watch-title">
-          <h2 id="nf-watch-title" className="nf-title">
-            Your Watchlist
-          </h2>
-          <ul className="nf-watch">
-            {STORIES.filter((story) => tracked.includes(story.id)).map((story) => (
-              <li key={`tracked-${story.id}`}>
-                <button type="button" className="nf-watch-open" onClick={() => ping(`Open ${story.heading}`)}>
-                  <img src={nf.messages} alt="" width={24} height={24} />
-                  <span className="nf-watch-copy">
-                    <span className="nf-watch-kind">Custom Report · From a theme</span>
-                    <span className="nf-watch-title">{story.heading}</span>
-                  </span>
-                </button>
-                <span className="nf-watch-date">Tracking since today</span>
-                <button
-                  type="button"
-                  className="nf-icon-btn"
-                  aria-label={`More for ${story.heading}`}
-                  onClick={() => ping("More")}
-                >
-                  <img src={nf.more} alt="" width={24} height={24} />
-                </button>
-              </li>
-            ))}
-            {WATCHLIST.map((item) => (
-              <li key={item.id}>
-                <button type="button" className="nf-watch-open" onClick={() => ping(`Open ${item.title}`)}>
-                  <img src={item.icon} alt="" width={24} height={24} />
-                  <span className="nf-watch-copy">
-                    <span className="nf-watch-kind">{item.kind}</span>
-                    <span className="nf-watch-title">{item.title}</span>
-                  </span>
-                </button>
-                {item.owner ? (
-                  <span className="nf-owner">
-                    <img src={nf.avatarArthur} alt="" width={24} height={24} />
-                    {item.owner}
-                  </span>
-                ) : null}
-                <span className="nf-watch-date">{item.date}</span>
-                <button
-                  type="button"
-                  className="nf-icon-btn"
-                  aria-label={`More for ${item.title}`}
-                  onClick={() => ping("More")}
-                >
-                  <img src={nf.more} alt="" width={24} height={24} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        {version === "v2" ? null : (
+          <section className="nf-section" aria-labelledby="nf-watch-title">
+            <h2 id="nf-watch-title" className="nf-title">
+              Your Watchlist
+            </h2>
+            <ul className="nf-watch">
+              {STORIES.filter((story) => tracked.includes(story.id)).map((story) => (
+                <li key={`tracked-${story.id}`}>
+                  <button type="button" className="nf-watch-open" onClick={() => ping(`Open ${story.heading}`)}>
+                    <img src={nf.messages} alt="" width={24} height={24} />
+                    <span className="nf-watch-copy">
+                      <span className="nf-watch-kind">Custom Report · From a theme</span>
+                      <span className="nf-watch-title">{story.heading}</span>
+                    </span>
+                  </button>
+                  <span className="nf-watch-date">Tracking since today</span>
+                  <button
+                    type="button"
+                    className="nf-icon-btn"
+                    aria-label={`More for ${story.heading}`}
+                    onClick={() => ping("More")}
+                  >
+                    <img src={nf.more} alt="" width={24} height={24} />
+                  </button>
+                </li>
+              ))}
+              {WATCHLIST.map((item) => (
+                <li key={item.id}>
+                  <button type="button" className="nf-watch-open" onClick={() => ping(`Open ${item.title}`)}>
+                    <img src={item.icon} alt="" width={24} height={24} />
+                    <span className="nf-watch-copy">
+                      <span className="nf-watch-kind">{item.kind}</span>
+                      <span className="nf-watch-title">{item.title}</span>
+                    </span>
+                  </button>
+                  {item.owner ? (
+                    <span className="nf-owner">
+                      <img src={nf.avatarArthur} alt="" width={24} height={24} />
+                      {item.owner}
+                    </span>
+                  ) : null}
+                  <span className="nf-watch-date">{item.date}</span>
+                  <button
+                    type="button"
+                    className="nf-icon-btn"
+                    aria-label={`More for ${item.title}`}
+                    onClick={() => ping("More")}
+                  >
+                    <img src={nf.more} alt="" width={24} height={24} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </main>
       {side?.kind === "track" ? (
         <TrackPanel
