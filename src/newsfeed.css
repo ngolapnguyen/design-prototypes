@@ -2711,21 +2711,21 @@
   background: none;
   color: var(--color-black);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 24px;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .nf2-link-arrow {
   width: 0;
-  height: 14px;
+  height: 16px;
   margin-left: 0;
   background: currentColor;
   opacity: 0;
   transform: translateX(-4px);
-  mask: var(--nf2-arrow) center / 14px no-repeat;
+  mask: var(--nf2-arrow) center / 16px no-repeat;
   transition:
     width 0.2s ease-out,
     margin-left 0.2s ease-out,
@@ -2735,7 +2735,7 @@
 
 .nf2-card:hover .nf2-link-arrow,
 .nf2-link:focus-visible .nf2-link-arrow {
-  width: 14px;
+  width: 16px;
   margin-left: 4px;
   opacity: 1;
   transform: none;
