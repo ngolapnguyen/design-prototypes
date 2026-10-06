@@ -22,7 +22,7 @@ function savedNoteCount() {
 }
 
 export default function App() {
-  const [page, setPage] = useState<LabPage>("newsfeed");
+  const [page, setPage] = useState<LabPage>("newsfeed-v2");
   const [theme, setTheme] = useState<string | null>(null);
   const [commenting, setCommenting] = useState(false);
   const [noteCount, setNoteCount] = useState(savedNoteCount);

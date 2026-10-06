@@ -33,15 +33,36 @@ const STORY_VELOCITY: Record<string, string> = {
   lulu: "+27% vs last week",
 };
 
-const ARCHIVE_TAGS: [RegExp, string][] = [
-  [/dupe/i, "Dupe"],
-  [/\b(vs\.?|tests?|ranked|face-offs?)\b/i, "Comparison"],
-  [/hamilton|hathaway|lululemon|portofino/i, "Brand Mention"],
-  [/wedding|festival|bridal|school|airport|pool/i, "Event"],
-  [/hacks?|fix|recovery|routines?|how|under ten/i, "Tutorial"],
+const V2_LABELS = [
+  "Trending",
+  "Negative sentiment",
+  "Unique use case",
+  "Launch & event",
+  "New creators",
+  "Comment spike",
+  "Untagged mention",
+  "Relevant again",
 ];
 
-const ARCHIVE_FALLBACK_TAGS = ["Trend", "Unique Use", "Tutorial"];
+const V2_STORY_TAGS: Record<string, string> = {
+  nyx: "Trending",
+  vb: "Unique use case",
+  anne: "Negative sentiment",
+  lulu: "Launch & event",
+};
+
+const ARCHIVE_TAGS: [RegExp, string][] = [
+  [/regrets|gone wrong|pilling|streak|doesn’t travel/i, "Negative sentiment"],
+  [/comebacks?|returns/i, "Relevant again"],
+  [/dupes?|drugstore/i, "Untagged mention"],
+  [/creators|instructors|artists/i, "New creators"],
+  [/wedding|festival|bridal|school|airport|pool/i, "Launch & event"],
+  [/\b(vs\.?|tests?|ranked|face-offs?)\b/i, "Comment spike"],
+  [/hacks?|swaps?|shortcut|one product|layering|at home|as a\b/i, "Unique use case"],
+  [/viral|challenges?|climbing/i, "Trending"],
+];
+
+const ARCHIVE_FALLBACK_TAGS = ["Trending", "Unique use case", "New creators"];
 
 function archiveTag(title: string, index: number) {
   return ARCHIVE_TAGS.find(([pattern]) => pattern.test(title))?.[1] ?? ARCHIVE_FALLBACK_TAGS[index % 3];
@@ -224,7 +245,7 @@ function foldStories(stories: Story[]): Story[] {
       ...newest,
       living,
       when: dateRange(FEED_NOW, newest.hoursAgo, oldest.hoursAgo),
-      tag: STORY_TAGS[newest.theme.id],
+      tag: V2_STORY_TAGS[newest.theme.id],
       velocity,
     };
   });
@@ -286,24 +307,14 @@ const POST_TITLES: Record<PostId, string> = {
 };
 
 const SENTENCE_HEADLINES: Record<string, string> = {
-  nyx: "NYX Brow Glue is going viral for ‘Crazy Lift’ and Long-Lasting Hold",
+  nyx: "NYX Brow Glue fans are raving about its ‘Crazy Lift’ and Long-Lasting Hold",
   vb: "Bridal lip combos are being built around Portofino ’97",
   anne: "Anne Hathaway’s red carpet looks are driving brown shadow tutorials",
   lulu: "Lululemon’s summer series is turning Pilates into a mood",
 };
 
-const TITLE_VERB =
-  /\b(is|are|gets|get|keep|keeps|go|goes|swap|swaps|returns|return|drives|drive|turns|turn|beat|beats|move|moves|sparks|spark|adds|add|ranked)\b/i;
-
 export function sentenceHeadline(title: string, themeId: string) {
-  const written = SENTENCE_HEADLINES[themeId];
-  if (written) return written;
-  if (title.includes(": ")) {
-    const [lead, rest] = title.split(": ");
-    return `${lead} is going viral for ${rest}`;
-  }
-  if (TITLE_VERB.test(title)) return title;
-  return `${title} is going viral`;
+  return SENTENCE_HEADLINES[themeId] ?? title;
 }
 
 const V2_THEME_LIMIT = 10;
@@ -449,7 +460,8 @@ export function Newsfeed({
   const stories = inRange;
   const archive = [...PAST_THEMES].sort((a, b) => a.daysAgo - b.daysAgo).map(storyForPast);
   const feed = [...stories, ...archive];
-  const feedLabels = [...new Set(feed.flatMap((story) => (story.tag ? [story.tag] : [])))];
+  const served = feed.slice(0, V2_THEME_LIMIT);
+  const feedLabels = V2_LABELS.filter((label) => served.some((story) => story.tag === label));
 
   const totalReviewed = pastReviewed + reviewed.length;
   const streak = totalReviewed ? 1 : 0;
@@ -670,14 +682,22 @@ export function Newsfeed({
                   {option}
                 </button>
               ))}
+              {labels.filter((label) => feedLabels.includes(label)).length > 1 ? (
+                <button type="button" className="nf2-filter-clear" onClick={() => setLabels([])}>
+                  Clear all
+                </button>
+              ) : null}
             </div>
           ) : null}
 
           <div className={version === "v2" ? "nf-stories is-v2" : "nf-stories"} style={STORY_TEXTURES}>
             {version === "v2"
-              ? feed
-                  .filter((story) => labels.length === 0 || (story.tag !== undefined && labels.includes(story.tag)))
-                  .slice(0, V2_THEME_LIMIT)
+              ? served
+                  .filter(
+                    (story) =>
+                      !labels.some((label) => feedLabels.includes(label)) ||
+                      (story.tag !== undefined && labels.includes(story.tag)),
+                  )
                   .map((story) => (
                     <FeedCardV2
                       key={story.id}

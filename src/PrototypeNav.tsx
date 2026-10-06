@@ -76,9 +76,7 @@ export function PrototypeNav({
           options={[
             { id: "newsfeed", label: "Newsfeed" },
             { id: "newsfeed-v2", label: "Newsfeed v2" },
-            { id: "decisions", label: "Design Decisions" },
             { id: "rules", label: "Rules" },
-            { id: "experiments", label: "Experiments" },
           ]}
         />
         {storyLayout && onStoryLayout ? (
