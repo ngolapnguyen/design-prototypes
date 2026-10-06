@@ -4,7 +4,7 @@ import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import type { PostId } from "./posts";
 import { CAPTION } from "./FocusCarousel";
 import { Menu, SORT_OPTIONS, TIME_OPTIONS } from "./FeedControls";
-import { GRID_THEMES, ThemeFeature, type GridTheme } from "./ThemeGrid";
+import { GRID_THEMES, ThemeFeature, Votes, type GridTheme } from "./ThemeGrid";
 import { PAST_THEMES, type PastTheme } from "./PastThemes";
 import { Annotations } from "./Annotations";
 import "./newsfeed.css";
@@ -295,7 +295,7 @@ const SENTENCE_HEADLINES: Record<string, string> = {
 const TITLE_VERB =
   /\b(is|are|gets|get|keep|keeps|go|goes|swap|swaps|returns|return|drives|drive|turns|turn|beat|beats|move|moves|sparks|spark|adds|add|ranked)\b/i;
 
-function sentenceHeadline(title: string, themeId: string) {
+export function sentenceHeadline(title: string, themeId: string) {
   const written = SENTENCE_HEADLINES[themeId];
   if (written) return written;
   if (title.includes(": ")) {
@@ -306,16 +306,32 @@ function sentenceHeadline(title: string, themeId: string) {
   return `${title} is going viral`;
 }
 
+const V2_THEME_LIMIT = 10;
+
+function reasonSentence(velocity: string, theme: GridTheme) {
+  const change = velocity.match(/\d+%/)?.[0];
+  const reach = `${compactNumber(theme.stats.views)} across ${theme.stats.posts} posts`;
+  return change ? `Views are up ${change} from last week, reaching ${reach}.` : `This story has reached ${reach}.`;
+}
+
 function FeedCardV2({
-  story,
+  theme,
+  tag,
+  velocity,
+  when,
+  vote,
   onOpen,
+  onVote,
 }: {
-  story: Story;
+  theme: GridTheme;
+  tag?: string;
+  velocity?: string;
+  when?: string;
+  vote: "up" | "down" | null;
   onOpen: () => void;
+  onVote: (next: "up" | "down") => void;
 }) {
-  const post = story.theme.posts[0];
-  const { tag, velocity } = story;
-  const meta = [velocity ? `Up ${velocity}` : "", story.when].filter(Boolean).join(" · ");
+  const post = theme.posts[0];
   return (
     <article className="nf2-card" onClick={onOpen}>
       <div className="nf2-hero">
@@ -324,11 +340,31 @@ function FeedCardV2({
           <p className="nf2-handle">{post.handle}</p>
           <p className="nf2-caption">{CAPTION}</p>
         </div>
+        {tag ? <span className="nf2-label">{tag}</span> : null}
+        <div className="nf2-votes" onClick={(event) => event.stopPropagation()}>
+          <Votes vote={vote} onVote={onVote} />
+        </div>
       </div>
       <div className="nf2-body">
-        <div className="nf2-meta">
-          {tag ? <span className="tg-tag">{tag}</span> : null}
-          <p className="nf2-date">{meta}</p>
+        <div className="nf2-top">
+          {when ? <p className="nf2-date">{when}</p> : null}
+          <div className="nf2-actions">
+            <button
+              type="button"
+              className="nf2-link"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpen();
+              }}
+            >
+              View details
+              <span
+                className="nf2-link-arrow"
+                style={{ "--nf2-arrow": `url(${nf.arrowGo})` } as CSSProperties}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
         </div>
         <h3>
           <button
@@ -339,9 +375,10 @@ function FeedCardV2({
               onOpen();
             }}
           >
-            {sentenceHeadline(story.theme.title, story.theme.id)}
+            {sentenceHeadline(theme.title, theme.id)}
           </button>
         </h3>
+        {velocity ? <p className="nf2-velocity">{reasonSentence(velocity, theme)}</p> : null}
       </div>
     </article>
   );
@@ -366,6 +403,7 @@ export function Newsfeed({
   const [savedPicks, setSavedPicks] = useState<string[]>(["pick-1", "pick-4"]);
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
   const [hidden, setHidden] = useState<string[]>([]);
+  const [label, setLabel] = useState<string | null>(null);
   const [side, setSide] = useState<SideContext | null>(null);
   const [openPost, setOpenPost] = useState<OpenPost | null>(null);
   const [openTheme, setOpenTheme] = useState<Story | null>(null);
@@ -410,6 +448,8 @@ export function Newsfeed({
   });
   const stories = inRange;
   const archive = [...PAST_THEMES].sort((a, b) => a.daysAgo - b.daysAgo).map(storyForPast);
+  const feed = [...stories, ...archive];
+  const feedLabels = [...new Set(feed.flatMap((story) => (story.tag ? [story.tag] : [])))];
 
   const totalReviewed = pastReviewed + reviewed.length;
   const streak = totalReviewed ? 1 : 0;
@@ -605,13 +645,37 @@ export function Newsfeed({
             </div>
           </div>
 
+          {version === "v2" ? (
+            <div className="nf2-filters" role="group" aria-label="Filter by label">
+              {[null, ...feedLabels].map((option) => (
+                <button
+                  key={option ?? "all"}
+                  type="button"
+                  className="nf2-filter"
+                  aria-pressed={label === option}
+                  onClick={() => setLabel(option)}
+                >
+                  {option ?? "All"}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           <div className={version === "v2" ? "nf-stories is-v2" : "nf-stories"} style={STORY_TEXTURES}>
             {version === "v2"
-              ? [...stories, ...archive].map((story) => (
+              ? feed
+                  .filter((story) => label === null || story.tag === label)
+                  .slice(0, V2_THEME_LIMIT)
+                  .map((story) => (
                   <FeedCardV2
                     key={story.id}
-                    story={story}
+                    theme={story.theme}
+                    tag={story.tag}
+                    velocity={story.velocity}
+                    when={story.when}
+                    vote={votes[story.id] ?? null}
                     onOpen={() => openFeedStory(story)}
+                    onVote={(next) => voteTheme(story.id, next)}
                   />
                 ))
               : [...stories, ...archive].map((story) =>

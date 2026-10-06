@@ -1,8 +1,11 @@
 export type LabPage = "newsfeed" | "newsfeed-v2" | "decisions" | "rules" | "experiments";
+export type StoryLayout = "side" | "bottom";
 
 type PrototypeNavProps = {
   page: LabPage;
   onPage: (page: LabPage) => void;
+  storyLayout?: StoryLayout;
+  onStoryLayout?: (layout: StoryLayout) => void;
   commenting: boolean;
   noteCount: number;
   onCommenting: (commenting: boolean) => void;
@@ -53,7 +56,15 @@ function CommentMark() {
   );
 }
 
-export function PrototypeNav({ page, onPage, commenting, noteCount, onCommenting }: PrototypeNavProps) {
+export function PrototypeNav({
+  page,
+  onPage,
+  storyLayout,
+  onStoryLayout,
+  commenting,
+  noteCount,
+  onCommenting,
+}: PrototypeNavProps) {
   return (
     <header className="proto-bar">
       <p className="proto-kicker">Prototype</p>
@@ -70,6 +81,17 @@ export function PrototypeNav({ page, onPage, commenting, noteCount, onCommenting
             { id: "experiments", label: "Experiments" },
           ]}
         />
+        {storyLayout && onStoryLayout ? (
+          <Segment
+            label="Story chat"
+            value={storyLayout}
+            onChange={onStoryLayout}
+            options={[
+              { id: "side", label: "Chat on side" },
+              { id: "bottom", label: "Ask a follow-up" },
+            ]}
+          />
+        ) : null}
         <button
           type="button"
           className={commenting ? "proto-comment is-on" : "proto-comment"}

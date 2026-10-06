@@ -3,11 +3,12 @@ import { DesignDecisions } from "./DesignDecisions";
 import { Experiments } from "./Experiments";
 import { ThemeCardSpecimen } from "./Homepage";
 import { Newsfeed } from "./Newsfeed";
-import { PrototypeNav, type LabPage } from "./PrototypeNav";
+import { PrototypeNav, type LabPage, type StoryLayout } from "./PrototypeNav";
 import { StoryChat } from "./StoryChat";
 import { Rules } from "./Rules";
 
 const NOTES_KEY = "homepage-annotations";
+const STORY_LAYOUT_KEY = "homepage-story-layout";
 
 function savedNoteCount() {
   try {
@@ -25,6 +26,14 @@ export default function App() {
   const [theme, setTheme] = useState<string | null>(null);
   const [commenting, setCommenting] = useState(false);
   const [noteCount, setNoteCount] = useState(savedNoteCount);
+  const [storyLayout, setStoryLayout] = useState<StoryLayout>(() =>
+    localStorage.getItem(STORY_LAYOUT_KEY) === "bottom" ? "bottom" : "side",
+  );
+
+  const changeStoryLayout = (next: StoryLayout) => {
+    localStorage.setItem(STORY_LAYOUT_KEY, next);
+    setStoryLayout(next);
+  };
 
   const changePage = (next: LabPage) => {
     setTheme(null);
@@ -46,6 +55,8 @@ export default function App() {
       <PrototypeNav
         page={page}
         onPage={changePage}
+        storyLayout={theme ? storyLayout : undefined}
+        onStoryLayout={changeStoryLayout}
         commenting={commenting}
         noteCount={noteCount}
         onCommenting={setCommenting}
@@ -69,7 +80,12 @@ export default function App() {
             />
           </div>
           {theme ? (
-            <StoryChat key={theme} themeId={theme} onBack={() => setTheme(null)} onOpenTheme={setTheme} />
+            <StoryChat
+              key={`${theme}-${storyLayout}`}
+              themeId={theme}
+              layout={storyLayout}
+              onBack={() => setTheme(null)}
+            />
           ) : null}
         </>
       )}

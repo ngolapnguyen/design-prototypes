@@ -214,3 +214,11 @@
   font-size: 16px;
   line-height: 22px;
 }
+
+.rules-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}

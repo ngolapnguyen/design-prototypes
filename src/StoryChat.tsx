@@ -1,33 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { InsightsNav } from "./ChatInsights";
 import { chatAssets } from "./chat-assets";
 import { FILTER_GROUPS, FiltersMenu, Menu, SORT_OPTIONS } from "./FeedControls";
-import { ThemeChat } from "./Newsfeed";
+import { sentenceHeadline, ThemeChat } from "./Newsfeed";
 import { NewsfeedPost, type OpenPost } from "./NewsfeedPost";
 import { catalog, PostCard, type CatalogPost } from "./PageStyle";
 import type { PostId } from "./posts";
-import { GRID_THEMES, ThemeFeature, type GridTheme } from "./ThemeGrid";
+import { GRID_THEMES, Votes, type GridTheme } from "./ThemeGrid";
+import type { StoryLayout } from "./PrototypeNav";
 import "./chat.css";
 import "./page-style.css";
 import "./story-chat.css";
 
-const RELATED_META: Record<string, { tag: string; living: string }> = {
-  nyx: { tag: "Unique Use", living: "Ongoing 8 days · +40% vs last week · Now relevant again" },
-  vb: { tag: "Event", living: "Ongoing 8 days · +18% vs last week · Now relevant again" },
-  anne: { tag: "Brand Safety", living: "Ongoing 8 days · +9% vs last week · Now relevant again" },
-  lulu: { tag: "Launch", living: "Ongoing 9 days · +27% vs last week · Now relevant again" },
-};
-
-const texture = (name: string) => `url(${import.meta.env.BASE_URL}assets/textures/${name})`;
-
-const RELATED_TEXTURES = {
-  "--tex-hero": texture("hero-starburst.png"),
-  "--tex-1": texture("grain-blue.jpg"),
-  "--tex-2": texture("grain-lime.jpg"),
-  "--tex-3": texture("grain-pink.jpg"),
-} as CSSProperties;
-
 type Brief = {
+  tag: string;
   crumb: string;
   title: string;
   overall: string;
@@ -35,11 +21,12 @@ type Brief = {
   axes: [string, string, string, string, string];
   lead: string;
   points: { label: string; body: string }[];
-  related: string[];
+  related: { text: string; hint: string }[];
 };
 
 const BRIEFS: Record<string, Brief> = {
   nyx: {
+    tag: "Positive use-case",
     crumb: "Sentiment towards NYX Brow Glue",
     title: "Gen Z’s sentiment towards NYX Brow Glue",
     overall: "Positive",
@@ -65,13 +52,26 @@ const BRIEFS: Record<string, Brief> = {
       },
     ],
     related: [
-      "Which Brow Glue complaints show up once the product has set?",
-      "How does the lift compare with brow soap in the same tutorials?",
-      "Are drugstore brow gels being positioned as dupes, or as a different job?",
-      "Which creators are driving the long-wear claim?",
+      {
+        text: "Who’s driving this conversation?",
+        hint: "Top creators, accounts and platforms behind the volume",
+      },
+      {
+        text: "What’s the sentiment on hold vs stiffness?",
+        hint: "Splits praise for lift from the stiffness complaints",
+      },
+      {
+        text: "How does this compare to other brow gels?",
+        hint: "Drugstore and prestige gels mentioned alongside it",
+      },
+      {
+        text: "Any complaints I should flag?",
+        hint: "Negative posts worth a look before you share",
+      },
     ],
   },
   vb: {
+    tag: "Event moment",
     crumb: "Sentiment towards Portofino ’97",
     title: "Bridal sentiment towards Portofino ’97",
     overall: "Positive",
@@ -97,13 +97,26 @@ const BRIEFS: Record<string, Brief> = {
       },
     ],
     related: [
-      "Which glosses are artists pairing with Portofino ’97 most often?",
-      "How does the liner hold up in wedding-day wear tests versus a night out?",
-      "Are creators flagging feathering on any particular lip shapes?",
-      "Which bridal artists are driving the all-day wear claim?",
+      {
+        text: "Which glosses are artists pairing with Portofino ’97 most often?",
+        hint: "The combos that show up in the most posts",
+      },
+      {
+        text: "How does the liner hold up in wedding-day wear tests?",
+        hint: "All-day tests compared with night-out wear",
+      },
+      {
+        text: "Are creators flagging feathering on any lip shapes?",
+        hint: "Complaints grouped by lip shape and skin tone",
+      },
+      {
+        text: "Which bridal artists are driving the all-day wear claim?",
+        hint: "Artists and accounts behind the volume",
+      },
     ],
   },
   anne: {
+    tag: "Brand safety",
     crumb: "Sentiment towards the brown eye look",
     title: "How creators read Anne Hathaway’s brown eye",
     overall: "Positive",
@@ -129,13 +142,26 @@ const BRIEFS: Record<string, Brief> = {
       },
     ],
     related: [
-      "Which drugstore shadows are standing in for the original shades?",
-      "How closely do the tutorials match the red-carpet placement?",
-      "Are creators treating this as a one-look trend or a brown-shadow revival?",
-      "Which editors started the breakdown that everyone is recreating?",
+      {
+        text: "Which drugstore shadows are standing in for the originals?",
+        hint: "Shade swaps creators recommend most",
+      },
+      {
+        text: "How closely do tutorials match the red-carpet placement?",
+        hint: "Where recreations drift from the original look",
+      },
+      {
+        text: "Is this a one-look trend or a brown-shadow revival?",
+        hint: "Whether posts reference the look or the color",
+      },
+      {
+        text: "Which editors started the breakdown?",
+        hint: "The first posts everyone is recreating",
+      },
     ],
   },
   lulu: {
+    tag: "Mixed launch",
     crumb: "Sentiment towards the Summer Series",
     title: "Sentiment towards Lululemon’s Summer Series",
     overall: "Mixed",
@@ -161,10 +187,22 @@ const BRIEFS: Record<string, Brief> = {
       },
     ],
     related: [
-      "What are instructors changing when they stitch the rooftop class?",
-      "How often does the “no distractions” line get called out?",
-      "Is the series being read as a class, or as a brand mood?",
-      "Which instructors are driving the stitches?",
+      {
+        text: "What are instructors changing when they stitch the class?",
+        hint: "Cueing, pacing and music swaps in duets",
+      },
+      {
+        text: "How often does the “no distractions” line get called out?",
+        hint: "Share of posts pushing back on the tagline",
+      },
+      {
+        text: "Is the series being read as a class, or as a brand mood?",
+        hint: "Workout posts compared with aesthetic posts",
+      },
+      {
+        text: "Which instructors are driving the stitches?",
+        hint: "Accounts amplifying the series the most",
+      },
     ],
   },
 };
@@ -191,14 +229,32 @@ const THEME_FILTER_GROUPS = FILTER_GROUPS.filter((group) =>
   ["platform", "sentiment", "followers", "organic"].includes(group.id),
 );
 
-const icon = (path: string) => `${import.meta.env.BASE_URL}assets/newsfeed/${path}`;
+const STORY_FOLD_GAP = 32;
 
+const icon = (path: string) => `${import.meta.env.BASE_URL}assets/newsfeed/${path}`;
 function StoryVideos({ theme, blockBack }: { theme: GridTheme; blockBack: { current: boolean } }) {
   const all = useMemo(() => catalog(theme), [theme]);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [menu, setMenu] = useState<"sort" | "filters" | null>(null);
+  const [reported, setReported] = useState(false);
   const [sort, setSort] = useState<SortId>("Views");
   const [filters, setFilters] = useState<string[]>([]);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [gridHeight, setGridHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    const scroll = grid?.closest<HTMLElement>(".story-chat-scroll");
+    if (!grid || !scroll) return;
+    const fit = () => {
+      const top = grid.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+      setGridHeight(Math.max(360, Math.round(scroll.clientHeight - top - STORY_FOLD_GAP)));
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(scroll);
+    return () => observer.disconnect();
+  }, []);
 
   const posts = useMemo(() => {
     const selectedPlatforms = [
@@ -234,9 +290,9 @@ function StoryVideos({ theme, blockBack }: { theme: GridTheme; blockBack: { curr
   };
 
   return (
-    <section className="story-chat-videos" aria-label="Posts">
+    <section className="story-chat-videos" aria-label="Top posts">
       <div className="ps-bar nf-controls">
-        <h2 className="ps-section-title">Posts</h2>
+        <h2 className="story-posts-title">Top posts</h2>
         <button
           type="button"
           className={menu === "sort" ? "nf-control is-open" : "nf-control"}
@@ -264,6 +320,12 @@ function StoryVideos({ theme, blockBack }: { theme: GridTheme; blockBack: { curr
           {filters.length ? <span className="nf-control-count">{filters.length}</span> : null}
           <img className="nf-caret" src={icon("icon-caret.svg")} alt="" width={16} height={16} />
         </button>
+        <button type="button" className="nf-control" aria-pressed={reported} onClick={() => setReported(!reported)}>
+          <span className="nf-control-icon">
+            <img src={icon("icon-track.svg")} alt="" width={16} height={16} />
+          </span>
+          {reported ? "Report created" : "Generate custom report"}
+        </button>
         {menu === "sort" ? (
           <Menu
             label="Sort"
@@ -283,7 +345,7 @@ function StoryVideos({ theme, blockBack }: { theme: GridTheme; blockBack: { curr
       </div>
       {posts.length === 0 ? <p className="ps-empty">No posts match these filters.</p> : null}
       {posts.length ? (
-        <div className="ps-grid">
+        <div ref={gridRef} className="ps-grid story-posts" style={{ height: gridHeight }}>
           {posts.map((post, index) => (
             <PostCard key={post.id} post={post} onOpen={() => setOpenIndex(index)} />
           ))}
@@ -295,32 +357,26 @@ function StoryVideos({ theme, blockBack }: { theme: GridTheme; blockBack: { curr
           onClose={() => setOpenIndex(null)}
           onAction={() => undefined}
           onPrev={openIndex && openIndex > 0 ? () => setOpenIndex(openIndex - 1) : undefined}
-          onNext={
-            openIndex !== null && openIndex < posts.length - 1 ? () => setOpenIndex(openIndex + 1) : undefined
-          }
+          onNext={openIndex !== null && openIndex < posts.length - 1 ? () => setOpenIndex(openIndex + 1) : undefined}
         />
       ) : null}
     </section>
   );
 }
 
-export function StoryChat({
-  themeId,
-  onBack,
-  onOpenTheme,
-}: {
-  themeId: string;
-  onBack: () => void;
-  onOpenTheme: (id: string) => void;
-}) {
+export function StoryChat({ themeId, layout, onBack }: { themeId: string; layout: StoryLayout; onBack: () => void }) {
   const theme = GRID_THEMES.find((item) => item.id === themeId) ?? GRID_THEMES[0];
   const brief = BRIEFS[theme.id] ?? BRIEFS.nyx;
-  const related = GRID_THEMES.filter((item) => item.id !== theme.id);
-  const asks = brief.related.map((text) => ({ text, reply: theme.summary }));
+  const asks = brief.related.map(({ text }) => ({
+    text,
+    reply: theme.summary,
+  }));
   const [draft, setDraft] = useState("");
-  const [chat, setChat] = useState<{ id: string; question?: { text: string; reply: string } } | null>(null);
-  const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
-  const [tracked, setTracked] = useState<string[]>([]);
+  const [chat, setChat] = useState<{
+    id: string;
+    question?: { text: string; reply: string };
+  } | null>(layout === "side" ? { id: "welcome" } : null);
+  const [vote, setVote] = useState<"up" | "down" | null>(null);
   const blockBack = useRef(false);
 
   useEffect(() => {
@@ -345,7 +401,7 @@ export function StoryChat({
 
   return (
     <div className="chat-lab">
-      <div className="chat-insights story-chat">
+      <div className={`chat-insights story-chat is-${layout}${chat ? " has-chat" : ""}`}>
         <InsightsNav />
         <div className="story-chat-main">
           <header className="story-chat-bar">
@@ -370,107 +426,88 @@ export function StoryChat({
             </div>
           </header>
 
-          <div className="story-chat-scroll">
-            <article className="story-chat-answer">
-              <h1>{theme.title}</h1>
-              <p className="story-chat-why">{theme.summary}</p>
-              <div className="ps-stats">
-                <span>
-                  <strong>
-                    {theme.stats.posts}
-                    <span aria-hidden="true">🔥</span>
-                  </strong>
-                  Posts
-                </span>
-                <span>
-                  <strong>
-                    {compact(theme.stats.views)}
-                    <span aria-hidden="true">👀</span>
-                  </strong>
-                  View count
-                </span>
-                <span>
-                  <strong>
-                    {compact(theme.stats.engagement)}
-                    <span aria-hidden="true">👀</span>
-                  </strong>
-                  Total engagement
-                </span>
+          <div className="story-chat-body">
+            <div className="story-chat-content">
+              <div className="story-chat-scroll">
+                <article className="story-chat-answer">
+                  <div className="story-chat-title">
+                    <h1>{sentenceHeadline(theme.title, theme.id)}</h1>
+                    <Votes vote={vote} onVote={(next) => setVote(vote === next ? null : next)} />
+                  </div>
+                  <p className="story-chat-why">{theme.summary}</p>
+                  <div className="ps-stats">
+                    <span>
+                      <strong>
+                        {theme.stats.posts}
+                        <span aria-hidden="true">🔥</span>
+                      </strong>
+                      Posts
+                    </span>
+                    <span>
+                      <strong>
+                        {compact(theme.stats.views)}
+                        <span aria-hidden="true">👀</span>
+                      </strong>
+                      View count
+                    </span>
+                    <span>
+                      <strong>
+                        {compact(theme.stats.engagement)}
+                        <span aria-hidden="true">👀</span>
+                      </strong>
+                      Total engagement
+                    </span>
+                  </div>
+                </article>
+
+                <StoryVideos theme={theme} blockBack={blockBack} />
               </div>
-            </article>
 
-            <StoryVideos theme={theme} blockBack={blockBack} />
-
-            <article className="story-chat-answer is-related">
-              <div className="story-chat-rule" />
-
-              <section className="story-chat-related" aria-label="Related themes">
-                <h2>Related themes</h2>
-                <div className="story-chat-themes" style={RELATED_TEXTURES}>
-                  {related.map((item) => {
-                    const meta = RELATED_META[item.id];
-                    return (
-                      <ThemeFeature
-                        key={item.id}
-                        theme={item}
-                        stage="single"
-                        tag={meta?.tag}
-                        living={meta?.living}
-                        tracked={tracked.includes(item.id)}
-                        vote={votes[item.id] ?? null}
-                        onOpen={() => onOpenTheme(item.id)}
-                        onTrack={() =>
-                          setTracked((current) =>
-                            current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id],
-                          )
-                        }
-                        onVote={(next) =>
-                          setVotes((current) => {
-                            if (current[item.id] === next) {
-                              const copy = { ...current };
-                              delete copy[item.id];
-                              return copy;
-                            }
-                            return { ...current, [item.id]: next };
-                          })
-                        }
-                      />
-                    );
-                  })}
+              <div className="story-chat-dock" hidden={chat !== null}>
+                <div className="follow-q-chips story-chat-suggest" aria-label="Suggested questions">
+                  {brief.related.map((question) => (
+                    <button
+                      key={question.text}
+                      type="button"
+                      className="follow-q-chip"
+                      onClick={() => ask(question.text)}
+                    >
+                      {question.text}
+                    </button>
+                  ))}
                 </div>
-              </section>
-            </article>
-          </div>
-
-          <form
-            className="story-chat-composer"
-            onSubmit={(event) => {
-              event.preventDefault();
-              ask(draft);
-            }}
-          >
-            <label>
-              <img src={chatAssets.avatarRhea} alt="" />
-              <input
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder="Ask a follow-up"
-                aria-label="Ask a follow-up"
+                <form
+                  className="story-chat-composer"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    ask(draft);
+                  }}
+                >
+                  <label>
+                    <img src={chatAssets.avatarRhea} alt="" />
+                    <input
+                      value={draft}
+                      onChange={(event) => setDraft(event.target.value)}
+                      placeholder="Ask a follow-up"
+                      aria-label="Ask a follow-up"
+                    />
+                  </label>
+                  <button type="submit" aria-label="Send" disabled={!draft.trim()}>
+                    <img src={chatAssets.sendPill} alt="" />
+                  </button>
+                </form>
+              </div>
+            </div>
+            {chat ? (
+              <ThemeChat
+                key={chat.id}
+                theme={theme}
+                question={chat.question}
+                suggestions={asks}
+                onClose={() => setChat(null)}
               />
-            </label>
-            <button type="submit" aria-label="Send" disabled={!draft.trim()}>
-              <img src={chatAssets.sendPill} alt="" />
-            </button>
-          </form>
-          {chat ? (
-            <ThemeChat
-              key={chat.id}
-              theme={theme}
-              question={chat.question}
-              suggestions={asks}
-              onClose={() => setChat(null)}
-            />
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

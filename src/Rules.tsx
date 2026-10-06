@@ -127,6 +127,110 @@ const TOPICS: Topic[] = [
       { text: "If nothing qualifies, no hero. The feed is all regular cards.", status: "todo" },
     ],
   },
+  {
+    id: "why",
+    meta: "04 · Why it matters",
+    title: "The reason line on each card",
+    flag: "Proposal",
+    note: "One line under the headline that tells the user why this story is in their feed right now.",
+    today: [
+      {
+        text: "Every card shows the same fragment, like “Up +40% vs last week”, so the cards read alike and the line doesn’t explain the tag.",
+      },
+    ],
+    proposed: [
+      {
+        text: "Write it as one plain sentence of about 15 words or fewer, with one reason per card.",
+        status: "todo",
+      },
+      {
+        text: "Lead with the number, then what it means, like “Views tripled this week, and the story is now at 2.4M across 144 posts.”",
+        status: "todo",
+      },
+      {
+        text: "Pick the reason from the tag: Brand safety shows sentiment, Event moment shows timing, Unique use shows engagement quality, and Trend shows momentum.",
+        status: "todo",
+      },
+      {
+        text: "Prefer a brand-relevance reason when one exists, like a tracked brand or competitor in the posts, because it explains why the story is in this user’s feed.",
+        status: "todo",
+      },
+      {
+        text: "Fall back to momentum and scale when nothing more specific applies.",
+        status: "todo",
+      },
+    ],
+  },
+];
+
+const REASONS = [
+  {
+    term: "Momentum",
+    examples: [
+      "Views have tripled in the last 48 hours.",
+      "This story peaked yesterday and is still climbing.",
+      "This is the fastest-growing story in your feed this week.",
+      "42 creators posted about this in the last 3 days.",
+    ],
+  },
+  {
+    term: "Scale",
+    examples: [
+      "144 posts have reached 2.4M views so far.",
+      "The top post alone has 200K views and 2K likes.",
+      "This story is bigger than 90% of beauty stories this month.",
+    ],
+  },
+  {
+    term: "Who’s driving it",
+    examples: [
+      "@uhodom_edinym’s demo started it, and 23 creators have picked it up since.",
+      "Three creators with over 500K followers posted about it this week.",
+      "Most of the posts come from Gen Z creators on TikTok.",
+      "Allure and two other beauty editors have covered it.",
+    ],
+  },
+  {
+    term: "Brand relevance",
+    examples: [
+      "NYX, a brand you track, is named in most of these posts.",
+      "Benefit, one of your competitors, shows up in 18 posts.",
+      "This overlaps with your Brow Lamination report.",
+      "None of your own posts cover this yet, so there’s room to join in.",
+    ],
+  },
+  {
+    term: "Sentiment",
+    examples: [
+      "82% of posts are positive, and the main complaint is stiffness.",
+      "Commenters keep asking how long it lasts.",
+      "Sentiment has turned negative over the last two days.",
+    ],
+  },
+  {
+    term: "Engagement quality",
+    examples: [
+      "People are saving these posts at four times the category average.",
+      "Comment rates are double what this category usually gets.",
+      "Most posts are duets and stitches, so people are joining in rather than just watching.",
+    ],
+  },
+  {
+    term: "Timing",
+    examples: [
+      "This story has been running for 8 days.",
+      "Similar trends have faded within a week, so the window is short.",
+      "It’s tied to Met Gala week.",
+    ],
+  },
+  {
+    term: "Personal",
+    examples: [
+      "This is similar to stories you’ve tracked before.",
+      "Your team has opened this story six times.",
+      "Barbara shared this with you.",
+    ],
+  },
 ];
 
 const METRICS = [
@@ -161,6 +265,7 @@ const QUESTIONS = [
   "Keep the Shares sort?",
   "Minimum posts for a hero (10?) and an engagement threshold.",
   "Relationship strength as a card label rather than a filter.",
+  "Which reason lines can we compute today? Brand mentions, sentiment and views are available; saves and team activity aren’t.",
 ];
 
 function RuleList({ rules }: { rules: Rule[] }) {
@@ -266,6 +371,33 @@ export function Rules() {
             </div>
           </article>
         ))}
+
+        <article className="chat-explore">
+          <header className="chat-explore-head">
+            <div>
+              <p className="chat-explore-meta">Reference</p>
+              <h2>Reason line options</h2>
+            </div>
+            <p className="chat-explore-flag">Brainstorm</p>
+          </header>
+          <p className="chat-explore-note">
+            Ways to say why a story matters, written as they’d appear on a card. Examples use the NYX Brow Glue story.
+          </p>
+          <dl className="rules-block rules-defs">
+            {REASONS.map((reason) => (
+              <div key={reason.term}>
+                <dt>{reason.term}</dt>
+                <dd>
+                  <ul className="rules-examples">
+                    {reason.examples.map((example) => (
+                      <li key={example}>{example}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </article>
 
         <article className="chat-explore">
           <header className="chat-explore-head">
