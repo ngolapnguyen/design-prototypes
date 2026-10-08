@@ -2228,11 +2228,8 @@ button.flag-count:focus-visible {
   right: 24px;
   bottom: 24px;
   z-index: 50;
-  width: min(480px, calc(100vw - 48px));
-  margin: 0;
-  box-shadow:
-    0 0 0 1px var(--color-gray-400),
-    0 24px 64px rgba(35, 6, 3, 0.16);
+  width: min(336px, calc(100vw - 48px));
+  filter: drop-shadow(0 16px 40px rgba(35, 6, 3, 0.18));
   animation: intro-rise 420ms var(--ease-out-soft);
 }
 
@@ -2240,27 +2237,13 @@ button.flag-count:focus-visible {
   position: absolute;
 }
 
-.intro-corner.is-veil,
-.intro-corner.is-blur,
-.intro-corner.is-none {
-  box-shadow:
-    0 0 0 1px var(--color-gray-400),
-    0 16px 40px rgba(35, 6, 3, 0.16);
+.intro-corner.is-ring .intro-rich-card {
+  box-shadow: 0 0 0 2px var(--color-maroon);
 }
 
-.intro-corner.is-ring {
-  box-shadow:
-    0 0 0 2px var(--color-maroon),
-    0 16px 40px rgba(35, 6, 3, 0.16);
-}
-
-.intro-corner.is-glow {
-  box-shadow:
-    0 0 0 4px rgba(128, 5, 50, 0.14),
-    0 16px 40px rgba(35, 6, 3, 0.16);
-  animation:
-    intro-rise 420ms var(--ease-out-soft),
-    intro-pulse 1.6s ease-out 300ms 3;
+.intro-corner.is-glow .intro-rich-card {
+  box-shadow: 0 0 0 4px rgba(128, 5, 50, 0.14);
+  animation: intro-pulse 1.6s ease-out 300ms 3;
 }
 
 @media (max-width: 720px) {
@@ -2423,12 +2406,6 @@ button.flag-count:focus-visible {
   display: flex;
   flex-direction: column;
   width: min(480px, 100%, max(340px, var(--fit-h) * 0.94));
-  border-radius: var(--radius-card);
-}
-
-.intro-corner.intro-single {
-  width: min(480px, calc(100vw - 48px));
-  margin: 0;
   border-radius: var(--radius-card);
 }
 
@@ -3122,7 +3099,7 @@ button.flag-count:focus-visible {
 }
 
 .gallery-corner-stage {
-  min-height: 720px;
+  min-height: 520px;
 }
 
 .gallery-corner-stage .intro-corner {

@@ -106,25 +106,27 @@ export function CornerTip({
 
   return (
     <aside
-      className={`intro-corner intro-sheet intro-single is-${emphasis}${inline ? " is-inline" : ""}`}
+      className={`intro-corner is-${emphasis}${inline ? " is-inline" : ""}`}
       role="dialog"
       aria-labelledby="intro-corner-title"
       aria-describedby="intro-corner-body"
     >
-      <IntroPreview bg="halftone" />
-      <div className="intro-single-body">
-        <div className="intro-single-copy">
-          <h2 id="intro-corner-title" className="intro-sheet-title">
-            Label your comments to group and compare.
-          </h2>
-          <p id="intro-corner-body" className="intro-single-text">
+      <div className="intro-rich-card">
+        <IntroPreview bg="halftone" />
+        <div className="intro-rich-body">
+          <div className="intro-rich-head">
+            <h2 id="intro-corner-title" className="intro-rich-title">
+              Label your comments to group and compare.
+            </h2>
+          </div>
+          <p id="intro-corner-body" className="intro-rich-text">
             Comments on posts in custom reports or topics are labeled automatically.
           </p>
-        </div>
-        <div className="intro-btns">
-          <button ref={primary} className="intro-btn is-primary" type="button" onClick={onDismiss}>
-            Sweet
-          </button>
+          <div className="intro-btns intro-rich-btns">
+            <button ref={primary} className="intro-btn is-primary is-sm" type="button" onClick={onDismiss}>
+              Sweet
+            </button>
+          </div>
         </div>
       </div>
     </aside>
