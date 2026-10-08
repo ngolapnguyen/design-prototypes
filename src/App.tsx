@@ -4,6 +4,7 @@ import { CommentSummary } from "./CommentSummary";
 import {
   BubbleTip,
   ConfirmDialog,
+  CornerTip,
   IntroModal,
   PlottingModal,
   RichTip,
@@ -43,6 +44,7 @@ const INTRO_VARIANTS: IntroVariant[] = [
   "confirm",
   "rich",
   "rich-stacked",
+  "corner",
   "modal",
   "plotting",
   "plotting-serif",
@@ -143,6 +145,12 @@ export default function App() {
     <>
       {nav}
       {tooltip && overlay ? <div className={`intro-scrim is-${emphasis}`} onClick={closeIntro} /> : null}
+      {active?.step === "intro" && intro === "corner" && overlay ? (
+        <div className={`intro-scrim is-${emphasis}`} onClick={closeIntro} />
+      ) : null}
+      {active?.step === "intro" && intro === "corner" ? (
+        <CornerTip emphasis={emphasis} onDismiss={closeIntro} />
+      ) : null}
       {active?.step === "intro" && intro === "modal" ? <IntroModal emphasis={emphasis} onDismiss={closeIntro} /> : null}
       {active?.step === "intro" && intro === "confirm" ? <ConfirmDialog onDismiss={closeIntro} /> : null}
       {active?.step === "intro" && (intro === "plotting" || intro === "plotting-serif") ? (

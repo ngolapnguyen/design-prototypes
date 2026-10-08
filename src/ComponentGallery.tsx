@@ -1,5 +1,14 @@
 import { useState, type ReactNode } from "react";
-import { BubbleTip, ConfirmDialog, IntroModal, PlottingModal, RichTip, type LaunchId, type RichCaret } from "./FeatureIntro";
+import {
+  BubbleTip,
+  ConfirmDialog,
+  CornerTip,
+  IntroModal,
+  PlottingModal,
+  RichTip,
+  type LaunchId,
+  type RichCaret,
+} from "./FeatureIntro";
 
 type TipKind = "bubble" | "bubble-titled" | "rich";
 
@@ -39,6 +48,24 @@ function ModalDemo({ render }: { render: (onDismiss: () => void) => ReactNode })
   return (
     <div className="gallery-stage gallery-modal-stage" key={run}>
       {render(() => setRun(run + 1))}
+    </div>
+  );
+}
+
+function CornerDemo() {
+  const [run, setRun] = useState(0);
+  return (
+    <div className="gallery-stage gallery-corner-stage">
+      <div className="gallery-mock-page" aria-hidden="true">
+        {[0, 1, 2].map((card) => (
+          <div key={card} className="card gallery-mock-card">
+            <span className="gallery-target-line is-short" />
+            <span className="gallery-target-line" />
+            <span className="gallery-target-line" />
+          </div>
+        ))}
+      </div>
+      <CornerTip key={run} inline onDismiss={() => setRun(run + 1)} />
     </div>
   );
 }
@@ -281,8 +308,15 @@ export function ComponentGallery() {
         <ConfirmDemo />
       </GallerySection>
       <RichTipSection index={4} />
-      <SingleModalSection index={5} />
-      <PlottingSection index={6} />
+      <GallerySection
+        index={5}
+        name="Tooltip · corner"
+        note="Sits in the bottom corner of the page. The rest of the screen stays usable. Sweet dismisses it."
+      >
+        <CornerDemo />
+      </GallerySection>
+      <SingleModalSection index={6} />
+      <PlottingSection index={7} />
     </main>
   );
 }
