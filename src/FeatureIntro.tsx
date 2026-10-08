@@ -82,15 +82,6 @@ export function BubbleTip({
   );
 }
 
-const CORNER_TILES = [
-  { name: "Lisbeth", src: assets.post2.lisbeth, label: "Shade", bg: "#f8e8ca", fg: "#9d762e" },
-  { name: "Lindsey", src: assets.post2.lindsey, label: "Texture", bg: "#f6d5e2", fg: "#8a4a62" },
-  { name: "Huda", src: assets.post2.huda, label: "Routine", bg: "#e0e4ca", fg: "#5f7340" },
-  { name: "Chands", src: assets.post2.chands, label: "Scent", bg: "#e6e2f2", fg: "#726e87" },
-  { name: "Madison", src: assets.post2.madison, label: "Gift", bg: "#f6ddd4", fg: "#8a5344" },
-  { name: "Chloe", src: assets.post2.chloe, label: "Pack", bg: "#d9e3f3", fg: "#4d6480" },
-];
-
 export function CornerTip({
   inline = false,
   emphasis = "none",
@@ -115,40 +106,23 @@ export function CornerTip({
 
   return (
     <aside
-      className={`intro-corner is-${emphasis}${inline ? " is-inline" : ""}`}
+      className={`intro-corner intro-sheet intro-single is-${emphasis}${inline ? " is-inline" : ""}`}
       role="dialog"
       aria-labelledby="intro-corner-title"
       aria-describedby="intro-corner-body"
     >
-      <div className="intro-corner-media" aria-hidden="true">
-        <img className="intro-corner-bg" src={assets.intro.bgSmoothOrchid} alt="" />
-        <div className="intro-corner-window">
-          <div className="intro-corner-window-bar">
-            <span />
-            <span />
-            <span />
-            <p>Comments</p>
-          </div>
-          <ul>
-            {CORNER_TILES.map((tile) => (
-              <li key={tile.name}>
-                <img src={tile.src} alt="" width={28} height={28} />
-                <span className="intro-corner-who">{tile.name}</span>
-                <em style={{ background: tile.bg, color: tile.fg }}>{tile.label}</em>
-              </li>
-            ))}
-          </ul>
+      <IntroPreview bg="halftone" />
+      <div className="intro-single-body">
+        <div className="intro-single-copy">
+          <h2 id="intro-corner-title" className="intro-sheet-title">
+            Label your comments to group and compare.
+          </h2>
+          <p id="intro-corner-body" className="intro-single-text">
+            Comments on posts in custom reports or topics are labeled automatically.
+          </p>
         </div>
-      </div>
-      <div className="intro-corner-copy">
-        <h2 id="intro-corner-title" className="intro-corner-title">
-          Label your comments to group and compare.
-        </h2>
-        <p id="intro-corner-body" className="intro-corner-text">
-          Comments on posts in custom reports or topics are labeled automatically.
-        </p>
-        <div className="intro-btns intro-corner-actions">
-          <button ref={primary} className="intro-btn is-primary is-sm" type="button" onClick={onDismiss}>
+        <div className="intro-btns">
+          <button ref={primary} className="intro-btn is-primary" type="button" onClick={onDismiss}>
             Sweet
           </button>
         </div>
